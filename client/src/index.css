@@ -1,0 +1,54 @@
+/* 1. ตั้งค่า Font Mitr ให้กับตัวแปรระบบและ Bootstrap */
+:root {
+  /* สั่งให้ Bootstrap ใช้ Mitr เป็นฟอนต์หลัก */
+  --bs-body-font-family: "Mitr", sans-serif;
+  --bs-font-sans-serif: "Mitr", sans-serif;
+
+  font-family: "Mitr", sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+
+  /* สีพื้นหลังและสีตัวอักษร (ปรับให้เป็นสีขาว Clean แบบมาตรฐานเว็บ) */
+  color-scheme: light;
+  color: #212529; /* สีดำเทามาตรฐาน Bootstrap */
+  background-color: #ffffff;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* 2. จัดการ Body (สำคัญมาก! ลบ display: flex เดิมออกเพื่อให้เว็บเรียงจากบนลงล่าง) */
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  /* ลบ display: flex; place-items: center; ออกไปแล้ว เพื่อไม่ให้เนื้อหากองรวมกันตรงกลาง */
+}
+
+/* 3. จัดการ Link */
+a {
+  font-weight: 500;
+  color: #0d6efd; /* สีฟ้า Bootstrap */
+  text-decoration: none;
+}
+a:hover {
+  color: #0a58ca;
+  text-decoration: underline;
+}
+
+/* 4. (Optional) ปรับแต่ง Scrollbar ให้สวยงามขึ้นใน Chrome/Edge */
+::-webkit-scrollbar {
+  width: 10px;
+}
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 5px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
