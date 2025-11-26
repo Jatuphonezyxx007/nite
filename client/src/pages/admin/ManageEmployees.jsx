@@ -4,14 +4,16 @@ import Swal from "sweetalert2";
 import "./ManageEmployees.css";
 
 function ManageEmployees() {
-  // ... state เดิม ...
   const [users, setUsers] = useState([]);
   const [filteredUsers, setFilteredUsers] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
+
+  // Modal State
   const [showModal, setShowModal] = useState(false);
+  const [editingUser, setEditingUser] = useState(null);
   const [showDeleted, setShowDeleted] = useState(false);
 
-  // State ใหม่สำหรับรูปภาพ
+  // Image State
   const [selectedImage, setSelectedImage] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
   const [isDragActive, setIsDragActive] = useState(false);
@@ -19,22 +21,22 @@ function ManageEmployees() {
 
   const apiUrl = import.meta.env.VITE_API_URL;
   const token = localStorage.getItem("token");
-  const config = { headers: { Authorization: `Bearer ${token}` } }; // อย่าลืม headers สำหรับ multipart/form-data ถ้า axios ไม่จัดการให้
+  const config = { headers: { Authorization: `Bearer ${token}` } };
 
-  // ... useEffect และ fetchUsers เหมือนเดิม ...
   useEffect(() => {
     fetchUsers();
   }, [showDeleted]);
 
   useEffect(() => {
-    // ... logic search เหมือนเดิม ...
     const results = users.filter((user) => {
       const term = searchTerm.toLowerCase();
+      // เพิ่มการค้นหาจาก emp_code ด้วย
       return (
         user.name_th?.toLowerCase().includes(term) ||
         user.name_en?.toLowerCase().includes(term) ||
         user.email?.toLowerCase().includes(term) ||
         String(user.id).toLowerCase().includes(term) ||
+        (user.emp_code && user.emp_code.toLowerCase().includes(term)) ||
         user.role?.toLowerCase().includes(term) ||
         user.position?.toLowerCase().includes(term)
       );
@@ -55,7 +57,25 @@ function ManageEmployees() {
     }
   };
 
-  // --- Image Handling Logic ---
+  // --- Handlers (ส่วน Modal และ Image Upload คงเดิม) ---
+  const handleOpenAddModal = () => {
+    setEditingUser(null);
+    setPreviewUrl(null);
+    setSelectedImage(null);
+    setShowModal(true);
+  };
+
+  const handleEditClick = (user) => {
+    setEditingUser(user);
+    if (user.profile_image) {
+      setPreviewUrl(`${apiUrl}/uploads/profile/${user.profile_image}`);
+    } else {
+      setPreviewUrl(null);
+    }
+    setSelectedImage(null);
+    setShowModal(true);
+  };
+
   const handleFileSelect = (e) => {
     const file = e.target.files[0];
     processFile(file);
@@ -65,11 +85,9 @@ function ManageEmployees() {
     e.preventDefault();
     setIsDragActive(true);
   };
-
   const handleDragLeave = () => {
     setIsDragActive(false);
   };
-
   const handleDrop = (e) => {
     e.preventDefault();
     setIsDragActive(false);
@@ -88,60 +106,64 @@ function ManageEmployees() {
   };
 
   const handleRemoveImage = (e) => {
-    e.stopPropagation(); // กันไม่ให้ไปกดโดน input file
+    e.stopPropagation();
     setSelectedImage(null);
     setPreviewUrl(null);
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
-  // --- Submit Form ---
-  const handleAddUser = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     const formData = new FormData(e.target);
-
-    // ถ้ามีรูป ต้อง append เข้าไป (บางที input file อาจจะไม่ส่งถ้าไม่ได้เลือกผ่าน dialog)
     if (selectedImage) {
       formData.set("profile_image", selectedImage);
     }
 
-    // แปลง FormData เป็น Object เพื่อ Debug ดู (Optional)
-    // const data = Object.fromEntries(formData);
-    // console.log(data);
-
     try {
-      // ต้องระบุ Content-Type เป็น multipart/form-data สำหรับ upload ไฟล์
-      await axios.post(`${apiUrl}/api/admin/users`, formData, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "multipart/form-data",
-        },
-      });
-
-      Swal.fire({
-        title: "สำเร็จ!",
-        text: "เพิ่มพนักงานเรียบร้อยแล้ว",
-        icon: "success",
-        confirmButtonColor: "#1E2A45",
-      });
-
+      if (editingUser) {
+        await axios.put(
+          `${apiUrl}/api/admin/users/${editingUser.id}`,
+          formData,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "multipart/form-data",
+            },
+          }
+        );
+        Swal.fire({
+          title: "อัปเดตสำเร็จ!",
+          text: "แก้ไขข้อมูลพนักงานเรียบร้อยแล้ว",
+          icon: "success",
+          confirmButtonColor: "#1E2A45",
+        });
+      } else {
+        await axios.post(`${apiUrl}/api/admin/users`, formData, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "multipart/form-data",
+          },
+        });
+        Swal.fire({
+          title: "เพิ่มสำเร็จ!",
+          text: "เพิ่มพนักงานเรียบร้อยแล้ว",
+          icon: "success",
+          confirmButtonColor: "#1E2A45",
+        });
+      }
       fetchUsers();
-      e.target.reset();
-      setPreviewUrl(null);
-      setSelectedImage(null);
       setShowModal(false);
     } catch (error) {
       console.error(error);
       Swal.fire(
         "Error",
-        error.response?.data?.message || "เพิ่มไม่สำเร็จ",
+        error.response?.data?.message || "ดำเนินการไม่สำเร็จ",
         "error"
       );
     }
   };
 
-  // ... handleDeleteUser และ handleEditClick เหมือนเดิม ...
   const handleDeleteUser = async (id) => {
-    /* ... logic เดิม ... */
     const result = await Swal.fire({
       title: "ยืนยันการนำออก?",
       text: "พนักงานจะย้ายไปอยู่ในรายการที่ถูกลบ",
@@ -169,19 +191,9 @@ function ManageEmployees() {
     }
   };
 
-  const handleEditClick = (user) => {
-    /* ... logic เดิม ... */
-    Swal.fire({
-      title: "Edit Info",
-      text: `กำลังเตรียมข้อมูลของ: ${user.name_th || user.name}`, // ปรับให้รองรับ name_th
-      icon: "info",
-      confirmButtonColor: "#1E2A45",
-    });
-  };
-
   return (
     <div className="manage-container p-4 fade-in">
-      {/* --- Header Section (เหมือนเดิม) --- */}
+      {/* Header */}
       <div className="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-5 gap-3">
         <div>
           <h2
@@ -202,22 +214,19 @@ function ManageEmployees() {
             <input
               type="text"
               className="custom-search-input"
-              placeholder="ค้นหาชื่อ, อีเมล, ตำแหน่ง..."
+              placeholder="ค้นหาชื่อ, รหัส, อีเมล..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-          <button
-            className="btn-add-employee"
-            onClick={() => setShowModal(true)}
-          >
+          <button className="btn-add-employee" onClick={handleOpenAddModal}>
             <span className="material-symbols-outlined">add_circle</span>
             <span>เพิ่มพนักงาน</span>
           </button>
         </div>
       </div>
 
-      {/* --- Filter Toggle (เหมือนเดิม) --- */}
+      {/* Filter Toggle */}
       <div className="d-flex justify-content-end mb-3">
         <label className="custom-switch">
           <span
@@ -240,7 +249,7 @@ function ManageEmployees() {
         </label>
       </div>
 
-      {/* --- Table Section --- */}
+      {/* Table */}
       <div className="custom-card">
         <div className="table-responsive">
           <table className="table custom-table mb-0">
@@ -252,21 +261,29 @@ function ManageEmployees() {
                 <th>ตำแหน่งงาน</th>
                 <th className="text-end pe-4">
                   {showDeleted ? "เวลาที่ลบ" : "การจัดการ"}
-                </th>{" "}
+                </th>
               </tr>
             </thead>
             <tbody>
               {filteredUsers.length > 0 ? (
                 filteredUsers.map((u) => (
                   <tr key={u.id}>
-                    {/* Column 1: Info */}
+                    {/* Column 1: Info & Avatar */}
                     <td className="ps-4">
                       <div className="d-flex align-items-center gap-3">
                         <div className="user-avatar-wrapper">
                           <img
-                            src={`https://ui-avatars.com/api/?name=${u.name}&background=random&size=128`}
-                            alt={u.name}
+                            src={
+                              u.profile_image && u.profile_image !== ""
+                                ? `${apiUrl}/uploads/profile/${u.profile_image}`
+                                : `https://ui-avatars.com/api/?name=${u.name_th}&background=random&size=128`
+                            }
+                            alt={u.name_th}
                             className="avatar-img"
+                            onError={(e) => {
+                              // ถ้าโหลดรูปจาก server ไม่ได้ ให้ fallback ไปใช้ ui-avatars
+                              e.target.src = `https://ui-avatars.com/api/?name=${u.name_th}&background=random&size=128`;
+                            }}
                           />
                         </div>
                         <div>
@@ -274,22 +291,35 @@ function ManageEmployees() {
                             className="fw-bold text-dark"
                             style={{ fontSize: "0.95rem" }}
                           >
-                            {u.name} {u.lastname}
-                            {u.nickname && (
+                            {u.name_th} {u.lastname_th}
+                            {u.nickname_th && (
                               <span className="text-muted fw-normal ms-1">
-                                ({u.nickname})
+                                ({u.nickname_th})
                               </span>
                             )}
                           </div>
-                          <div
-                            className="text-muted small"
-                            style={{ fontSize: "0.75rem" }}
-                          >
-                            Code: #{String(u.id).padStart(4, "0")}
+
+                          {/* ส่วนที่เพิ่มใหม่: รหัสพนักงาน และ ชื่อภาษาอังกฤษ */}
+                          <div className="d-flex align-items-center gap-2 mt-1">
+                            {u.emp_code && (
+                              <span
+                                className="badge bg-light text-secondary border fw-normal"
+                                style={{ fontSize: "0.7rem" }}
+                              >
+                                {u.emp_code}
+                              </span>
+                            )}
+                            <span
+                              className="text-muted small"
+                              style={{ fontSize: "0.75rem" }}
+                            >
+                              {u.name_en} {u.lastname_en}
+                            </span>
                           </div>
                         </div>
                       </div>
                     </td>
+
                     {/* Column 2: Role */}
                     <td>
                       {u.role === "admin" ? (
@@ -302,6 +332,7 @@ function ManageEmployees() {
                         </div>
                       )}
                     </td>
+
                     {/* Column 3: Email */}
                     <td
                       className="text-muted"
@@ -309,16 +340,17 @@ function ManageEmployees() {
                     >
                       {u.email}
                     </td>
+
                     {/* Column 4: Position */}
                     <td>
                       <div className="d-flex align-items-center text-dark fw-medium">
                         {u.position || "-"}
                       </div>
                     </td>
+
                     {/* Column 5: Actions */}
                     <td className="text-end pe-4">
                       {showDeleted ? (
-                        // --- กรณีดูถังขยะ: แสดงเวลา ---
                         <div
                           className="text-danger opacity-75 fw-medium"
                           style={{ fontSize: "0.9rem" }}
@@ -329,19 +361,11 @@ function ManageEmployees() {
                           >
                             schedule
                           </span>
-                          {/* ใช้ deleted_at หรือ updated_at ตาม database จริง */}
                           {u.deleted_at
-                            ? new Date(u.deleted_at).toLocaleString("th-TH", {
-                                year: "numeric",
-                                month: "short",
-                                day: "numeric",
-                                hour: "2-digit",
-                                minute: "2-digit",
-                              })
+                            ? new Date(u.deleted_at).toLocaleString("th-TH")
                             : "-"}
                         </div>
                       ) : (
-                        // --- กรณีปกติ: แสดงปุ่มเครื่องมือ ---
                         <div className="d-flex justify-content-end gap-2">
                           <button
                             className="action-btn edit"
@@ -364,22 +388,13 @@ function ManageEmployees() {
                           </button>
                         </div>
                       )}
-                    </td>{" "}
+                    </td>
                   </tr>
                 ))
               ) : (
-                // Not Found State
                 <tr>
                   <td colSpan="5" className="text-center py-5">
-                    <div className="py-4 text-muted opacity-50">
-                      <span
-                        className="material-symbols-outlined"
-                        style={{ fontSize: "48px" }}
-                      >
-                        search_off
-                      </span>
-                      <p className="mt-2 mb-0">ไม่พบข้อมูลที่ค้นหา</p>
-                    </div>
+                    ...
                   </td>
                 </tr>
               )}
@@ -388,7 +403,7 @@ function ManageEmployees() {
         </div>
       </div>
 
-      {/* --- Modal Add User (Updated) --- */}
+      {/* --- Modal (คงเดิม) --- */}
       {showModal && (
         <>
           <div
@@ -405,16 +420,16 @@ function ManageEmployees() {
             style={{ zIndex: 1055 }}
           >
             <div className="modal-dialog modal-dialog-centered modal-lg">
-              {" "}
-              {/* ใช้ modal-lg ให้กว้างขึ้น */}
               <div className="modal-content custom-modal-content">
                 <div className="custom-modal-header d-flex justify-content-between align-items-center">
                   <div>
                     <h5 className="modal-title fw-bold text-dark">
-                      เพิ่มพนักงานใหม่
+                      {editingUser ? "แก้ไขข้อมูลพนักงาน" : "เพิ่มพนักงานใหม่"}
                     </h5>
                     <p className="m-0 text-muted small">
-                      กรอกข้อมูลให้ครบถ้วนเพื่อสร้างบัญชี
+                      {editingUser
+                        ? `กำลังแก้ไขข้อมูลของ: ${editingUser.name_th}`
+                        : "กรอกข้อมูลให้ครบถ้วนเพื่อสร้างบัญชี"}
                     </p>
                   </div>
                   <button
@@ -425,9 +440,13 @@ function ManageEmployees() {
                 </div>
 
                 <div className="modal-body p-4">
-                  <form onSubmit={handleAddUser} encType="multipart/form-data">
+                  <form
+                    key={editingUser ? editingUser.id : "new"}
+                    onSubmit={handleSubmit}
+                    encType="multipart/form-data"
+                  >
                     <div className="row g-4">
-                      {/* --- Left Column: Image Upload --- */}
+                      {/* Image Upload Area */}
                       <div className="col-md-4">
                         <div className="form-section-title">รูปโปรไฟล์</div>
                         <div
@@ -465,12 +484,6 @@ function ManageEmployees() {
                               <p className="m-0 small fw-bold text-dark">
                                 คลิก หรือ ลากไฟล์มาวาง
                               </p>
-                              <p
-                                className="m-0"
-                                style={{ fontSize: "0.7rem", color: "#9ca3af" }}
-                              >
-                                JPG, PNG, WEBP (Max 2MB)
-                              </p>
                             </div>
                           )}
                           <input
@@ -484,9 +497,8 @@ function ManageEmployees() {
                         </div>
                       </div>
 
-                      {/* --- Right Column: Inputs --- */}
+                      {/* Inputs */}
                       <div className="col-md-8">
-                        {/* ข้อมูลภาษาไทย */}
                         <div className="form-section-title mt-0">
                           ข้อมูลส่วนตัว (TH)
                         </div>
@@ -495,6 +507,7 @@ function ManageEmployees() {
                             <select
                               name="prefix_th"
                               className="form-select form-control-custom"
+                              defaultValue={editingUser?.prefix_th || "นาย"}
                             >
                               <option value="นาย">นาย</option>
                               <option value="นาง">นาง</option>
@@ -507,6 +520,7 @@ function ManageEmployees() {
                               className="form-control form-control-custom"
                               placeholder="ชื่อจริง (ไทย)"
                               required
+                              defaultValue={editingUser?.name_th}
                             />
                           </div>
                           <div className="col-md-5">
@@ -515,6 +529,7 @@ function ManageEmployees() {
                               className="form-control form-control-custom"
                               placeholder="นามสกุล (ไทย)"
                               required
+                              defaultValue={editingUser?.lastname_th}
                             />
                           </div>
                           <div className="col-md-12 mt-2">
@@ -522,11 +537,11 @@ function ManageEmployees() {
                               name="nickname_th"
                               className="form-control form-control-custom"
                               placeholder="ชื่อเล่น (ไทย)"
+                              defaultValue={editingUser?.nickname_th}
                             />
                           </div>
                         </div>
 
-                        {/* ข้อมูลภาษาอังกฤษ */}
                         <div className="form-section-title">
                           Personal Info (EN)
                         </div>
@@ -535,6 +550,7 @@ function ManageEmployees() {
                             <select
                               name="prefix_en"
                               className="form-select form-control-custom"
+                              defaultValue={editingUser?.prefix_en || "Mr."}
                             >
                               <option value="Mr.">Mr.</option>
                               <option value="Mrs.">Mrs.</option>
@@ -547,6 +563,7 @@ function ManageEmployees() {
                               className="form-control form-control-custom"
                               placeholder="First Name"
                               required
+                              defaultValue={editingUser?.name_en}
                             />
                           </div>
                           <div className="col-md-5">
@@ -555,6 +572,7 @@ function ManageEmployees() {
                               className="form-control form-control-custom"
                               placeholder="Last Name"
                               required
+                              defaultValue={editingUser?.lastname_en}
                             />
                           </div>
                           <div className="col-md-12 mt-2">
@@ -562,12 +580,13 @@ function ManageEmployees() {
                               name="nickname_en"
                               className="form-control form-control-custom"
                               placeholder="Nickname (EN)"
+                              defaultValue={editingUser?.nickname_en}
                             />
                           </div>
                         </div>
                       </div>
 
-                      {/* --- Bottom Section: System Account --- */}
+                      {/* System Account */}
                       <div className="col-12">
                         <div className="form-section-title">
                           ข้อมูลเข้าระบบ (System)
@@ -583,18 +602,26 @@ function ManageEmployees() {
                               className="form-control form-control-custom"
                               placeholder="employee@nite.com"
                               required
+                              defaultValue={editingUser?.email}
                             />
                           </div>
                           <div className="col-md-6">
                             <label className="form-label text-muted small fw-bold">
-                              Password
+                              Password{" "}
+                              {editingUser && (
+                                <span className="text-danger small fw-normal">
+                                  (เว้นว่างถ้าไม่เปลี่ยน)
+                                </span>
+                              )}
                             </label>
                             <input
                               name="password"
                               type="password"
                               className="form-control form-control-custom"
-                              placeholder="••••••••"
-                              required
+                              placeholder={
+                                editingUser ? "••••••••" : "กำหนดรหัสผ่าน"
+                              }
+                              required={!editingUser}
                             />
                           </div>
                           <div className="col-md-6">
@@ -605,6 +632,7 @@ function ManageEmployees() {
                               name="position"
                               className="form-control form-control-custom"
                               placeholder="เช่น Software Engineer"
+                              defaultValue={editingUser?.position}
                             />
                           </div>
                           <div className="col-md-6">
@@ -615,6 +643,7 @@ function ManageEmployees() {
                               name="role"
                               className="form-select form-control-custom"
                               style={{ backgroundImage: "none" }}
+                              defaultValue={editingUser?.role || "user"}
                             >
                               <option value="user">User (พนักงานทั่วไป)</option>
                               <option value="admin">Admin (ผู้ดูแลระบบ)</option>
@@ -634,7 +663,7 @@ function ManageEmployees() {
                           borderRadius: "10px",
                         }}
                       >
-                        บันทึกข้อมูลพนักงาน
+                        {editingUser ? "บันทึกการแก้ไข" : "สร้างบัญชีพนักงาน"}
                       </button>
                       <button
                         type="button"
