@@ -256,7 +256,7 @@ function ManageEmployees() {
             <thead>
               <tr>
                 <th className="ps-4">พนักงาน</th>
-                <th>สถานะ (Role)</th>
+                <th>สิทธิ์การเข้าถึง</th>
                 <th>อีเมลติดต่อ</th>
                 <th>ตำแหน่งงาน</th>
                 <th className="text-end pe-4">
@@ -496,7 +496,6 @@ function ManageEmployees() {
                           />
                         </div>
                       </div>
-
                       {/* Inputs */}
                       <div className="col-md-8">
                         <div className="form-section-title mt-0">
@@ -585,14 +584,32 @@ function ManageEmployees() {
                           </div>
                         </div>
                       </div>
-
                       {/* System Account */}
                       <div className="col-12">
                         <div className="form-section-title">
                           ข้อมูลเข้าระบบ (System)
                         </div>
                         <div className="row g-3">
-                          <div className="col-md-6">
+                          {/* --- ส่วนที่เพิ่มใหม่: รหัสพนักงาน (emp_code) --- */}
+                          <div className="col-md-4">
+                            <label className="form-label text-muted small fw-bold">
+                              รหัสพนักงาน <span className="text-danger">*</span>
+                            </label>
+                            <input
+                              name="emp_code"
+                              className="form-control form-control-custom"
+                              placeholder="เช่น 000123"
+                              required
+                              maxLength={6} // จำกัด 6 ตัวอักษร
+                              defaultValue={editingUser?.emp_code}
+                              // เพิ่ม pattern ถ้าต้องการบังคับตัวเลขเท่านั้น (Optional)
+                              // pattern="[0-9]{6}"
+                              // title="กรุณากรอกตัวเลข 6 หลัก"
+                            />
+                          </div>
+
+                          {/* ปรับ col-md-6 เป็น col-md-8 เพื่อให้ Email ยาวขึ้นรับกับดีไซน์ */}
+                          <div className="col-md-8">
                             <label className="form-label text-muted small fw-bold">
                               Email
                             </label>
@@ -605,7 +622,9 @@ function ManageEmployees() {
                               defaultValue={editingUser?.email}
                             />
                           </div>
-                          <div className="col-md-6">
+
+                          {/* ส่วน Password, Position, Role เหมือนเดิม แต่จัด Layout ใหม่นิดหน่อย */}
+                          <div className="col-md-4">
                             <label className="form-label text-muted small fw-bold">
                               Password{" "}
                               {editingUser && (
@@ -624,7 +643,8 @@ function ManageEmployees() {
                               required={!editingUser}
                             />
                           </div>
-                          <div className="col-md-6">
+
+                          <div className="col-md-4">
                             <label className="form-label text-muted small fw-bold">
                               ตำแหน่ง (Position)
                             </label>
@@ -635,7 +655,8 @@ function ManageEmployees() {
                               defaultValue={editingUser?.position}
                             />
                           </div>
-                          <div className="col-md-6">
+
+                          <div className="col-md-4">
                             <label className="form-label text-muted small fw-bold">
                               สิทธิ์การใช้งาน (Role)
                             </label>
@@ -650,7 +671,7 @@ function ManageEmployees() {
                             </select>
                           </div>
                         </div>
-                      </div>
+                      </div>{" "}
                     </div>
 
                     <div className="d-grid gap-2 mt-4 pt-2">

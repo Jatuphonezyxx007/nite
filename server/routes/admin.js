@@ -291,6 +291,8 @@ router.post(
   upload.single("profile_image"),
   async (req, res) => {
     const {
+      // เพิ่ม emp_code เข้ามารับค่าจาก Frontend
+      emp_code,
       prefix_th,
       name_th,
       lastname_th,
@@ -305,38 +307,41 @@ router.post(
       position,
     } = req.body;
 
-    // รับชื่อไฟล์รูปภาพ (ถ้ามี)
-    const profile_image = req.file ? req.file.filename : null;
+    // แก้ไข: ถ้าไม่มีรูป ให้ใช้ค่าว่าง "" แทน null เพื่อไม่ให้ติด Error NOT NULL ของ MySQL
+    const profile_image = req.file ? req.file.filename : "";
 
     try {
       // Hash Password
       const salt = await bcrypt.genSalt(10);
       const hash = await bcrypt.hash(password, salt);
 
+      // แก้ไข SQL: เพิ่ม emp_code เข้าไปใน Query
       const sql = `
       INSERT INTO users 
-      (prefix_th, name_th, lastname_th, nickname_th, prefix_en, name_en, lastname_en, nickname_en, email, password_hash, role, position, profile_image) 
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      (emp_code, prefix_th, name_th, lastname_th, nickname_th, prefix_en, name_en, lastname_en, nickname_en, email, password_hash, role, position, profile_image) 
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
       await db.query(sql, [
+        emp_code, // 1. ใส่ emp_code เป็นตัวแรก (ตามลำดับใน SQL)
         prefix_th,
         name_th,
         lastname_th,
-        nickname_th,
+        nickname_th || "", // ป้องกัน null
         prefix_en,
         name_en,
         lastname_en,
-        nickname_en,
+        nickname_en || "", // ป้องกัน null
         email,
         hash,
         role || "user",
         position,
-        profile_image,
+        profile_image, // ส่งค่า "" ถ้าไม่มีรูป
       ]);
 
       res.json({ message: "User created successfully" });
     } catch (err) {
+      console.error("Database Insert Error:", err); // เพิ่ม log เพื่อดู error ใน terminal
       res.status(500).json({ error: err.message });
     }
   }

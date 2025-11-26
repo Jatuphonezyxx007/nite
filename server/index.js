@@ -11,7 +11,9 @@ app.use(express.json({ limit: "50mb" }));
 const authRoutes = require("./routes/auth");
 const adminRoutes = require("./routes/admin");
 const attendanceRoutes = require("./routes/attendance");
+const path = require("path"); // อย่าลืม import path
 
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 // Use Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/admin", adminRoutes);
