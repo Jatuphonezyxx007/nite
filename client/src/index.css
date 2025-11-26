@@ -52,3 +52,33 @@ a:hover {
 ::-webkit-scrollbar-thumb:hover {
   background: #555;
 }
+
+/* ... (โค้ดเดิม) ... */
+
+/* เพิ่ม CSS สำหรับ Sidebar */
+
+/* สีตอน Active (เลือกเมนูนั้นอยู่) */
+.active-menu {
+  background-color: #0d6efd !important; /* สี Primary ของ Bootstrap */
+  color: white !important;
+  font-weight: 500;
+}
+
+/* Effect ตอนเอาเมาส์ไปชี้เมนูที่ยังไม่ได้เลือก */
+.sidebar-item:not(.active-menu):hover {
+  background-color: #f8f9fa; /* สีเทาอ่อนๆ */
+  color: #0d6efd !important; /* เปลี่ยนตัวหนังสือเป็นสีฟ้า */
+  transform: translateX(5px); /* ขยับขวานิดนึงให้ดูมีมิติ */
+}
+
+/* Animation สำหรับ Text เวลาเปิด Sidebar */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}

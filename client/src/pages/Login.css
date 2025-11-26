@@ -1,0 +1,115 @@
+/* Login.css */
+
+/* 1. Dynamic Background: ปรับโทนสีให้เข้ากับพื้นหลังสีน้ำเงินของ Logo */
+@keyframes gradient-animation {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.login-bg {
+  /* ไล่สีโทน น้ำเงินเข้ม -> น้ำเงินเทา -> ดำ ให้ดู Night สมชื่อ Nite */
+  background: linear-gradient(-45deg, #1a1f3c, #2c3e50, #0f1221, #24243e);
+  background-size: 400% 400%;
+  animation: gradient-animation 15s ease infinite;
+  min-height: 100vh; /* เต็มจอเสมอ */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px; /* กันขอบเวลาจอมือถือเล็กมากๆ */
+}
+
+/* 2. Glass Card Design */
+.glass-card {
+  background: rgba(
+    30,
+    41,
+    59,
+    0.6
+  ); /* พื้นหลังการ์ดสีเข้มโปร่งแสง เพื่อขับให้ Logo เด่น */
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+  width: 100%;
+  max-width: 420px; /* ล็อคความกว้างสูงสุดไม่ให้ใหญ่เกิน */
+  border-radius: 20px;
+  overflow: hidden; /* ตัดมุมโค้ง */
+  transition: transform 0.3s ease;
+}
+
+/* 3. Input Fields styling */
+.form-floating > .form-control {
+  background: rgba(255, 255, 255, 0.9);
+  border: none;
+}
+.form-floating > .form-control:focus {
+  background: #fff;
+  box-shadow: 0 0 0 4px rgba(255, 183, 0, 0.25); /* Focus แล้วมีเงาสีเหลือง */
+}
+.form-floating > label {
+  color: #666;
+}
+
+/* 4. The "Nite" Button (Yellow Theme) */
+.btn-nite {
+  /* ไล่สีเหลือง-ส้ม ตาม Logo */
+  background: linear-gradient(to right, #ffb700, #ff9900);
+  color: #1a1f3c !important; /* ตัวหนังสือสีเข้ม เพื่อให้อ่านง่ายบนพื้นเหลือง */
+  font-weight: 700;
+  border: none;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  z-index: 1;
+}
+
+.btn-nite::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(to right, #ff9900, #ffb700);
+  opacity: 0;
+  z-index: -1;
+  transition: opacity 0.3s ease;
+}
+
+.btn-nite:hover::before {
+  opacity: 1; /* Effect สลับสีเวลา Hover */
+}
+
+.btn-nite:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 20px rgba(255, 153, 0, 0.4); /* เงาสีส้ม */
+}
+
+/* 5. Responsive Adjustments */
+@media (max-width: 576px) {
+  .glass-card {
+    margin: 0 10px;
+  }
+  .card-padding {
+    padding: 2rem !important; /* ลด Padding ในมือถือ */
+  }
+  .logo-img {
+    width: 140px !important; /* ลดขนาด Logo ในมือถือ */
+  }
+}
+
+@media (min-width: 577px) {
+  .card-padding {
+    padding: 3rem !important; /* Padding ใหญ่ขึ้นในจอ PC */
+  }
+  .logo-img {
+    width: 160px !important;
+  }
+}
