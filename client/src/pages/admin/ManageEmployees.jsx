@@ -1,34 +1,42 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import Swal from "sweetalert2";
-import "./ManageEmployees.css"; // Import CSS ใหม่
+import "./ManageEmployees.css";
 
 function ManageEmployees() {
+  // ... state เดิม ...
   const [users, setUsers] = useState([]);
   const [filteredUsers, setFilteredUsers] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [showDeleted, setShowDeleted] = useState(false);
 
+  // State ใหม่สำหรับรูปภาพ
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState(null);
+  const [isDragActive, setIsDragActive] = useState(false);
+  const fileInputRef = useRef(null);
+
   const apiUrl = import.meta.env.VITE_API_URL;
   const token = localStorage.getItem("token");
-  const config = { headers: { Authorization: `Bearer ${token}` } };
+  const config = { headers: { Authorization: `Bearer ${token}` } }; // อย่าลืม headers สำหรับ multipart/form-data ถ้า axios ไม่จัดการให้
 
+  // ... useEffect และ fetchUsers เหมือนเดิม ...
   useEffect(() => {
     fetchUsers();
   }, [showDeleted]);
 
   useEffect(() => {
+    // ... logic search เหมือนเดิม ...
     const results = users.filter((user) => {
       const term = searchTerm.toLowerCase();
       return (
-        user.name.toLowerCase().includes(term) ||
-        (user.lastname && user.lastname.toLowerCase().includes(term)) ||
-        (user.nickname && user.nickname.toLowerCase().includes(term)) ||
-        user.email.toLowerCase().includes(term) ||
+        user.name_th?.toLowerCase().includes(term) ||
+        user.name_en?.toLowerCase().includes(term) ||
+        user.email?.toLowerCase().includes(term) ||
         String(user.id).toLowerCase().includes(term) ||
-        user.role.toLowerCase().includes(term) ||
-        (user.position && user.position.toLowerCase().includes(term))
+        user.role?.toLowerCase().includes(term) ||
+        user.position?.toLowerCase().includes(term)
       );
     });
     setFilteredUsers(results);
@@ -47,27 +55,93 @@ function ManageEmployees() {
     }
   };
 
+  // --- Image Handling Logic ---
+  const handleFileSelect = (e) => {
+    const file = e.target.files[0];
+    processFile(file);
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    setIsDragActive(true);
+  };
+
+  const handleDragLeave = () => {
+    setIsDragActive(false);
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    setIsDragActive(false);
+    const file = e.dataTransfer.files[0];
+    processFile(file);
+  };
+
+  const processFile = (file) => {
+    if (file && file.type.startsWith("image/")) {
+      setSelectedImage(file);
+      const url = URL.createObjectURL(file);
+      setPreviewUrl(url);
+    } else {
+      Swal.fire("ผิดพลาด", "กรุณาเลือกไฟล์รูปภาพเท่านั้น", "error");
+    }
+  };
+
+  const handleRemoveImage = (e) => {
+    e.stopPropagation(); // กันไม่ให้ไปกดโดน input file
+    setSelectedImage(null);
+    setPreviewUrl(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  // --- Submit Form ---
   const handleAddUser = async (e) => {
     e.preventDefault();
     const formData = new FormData(e.target);
-    const data = Object.fromEntries(formData);
+
+    // ถ้ามีรูป ต้อง append เข้าไป (บางที input file อาจจะไม่ส่งถ้าไม่ได้เลือกผ่าน dialog)
+    if (selectedImage) {
+      formData.set("profile_image", selectedImage);
+    }
+
+    // แปลง FormData เป็น Object เพื่อ Debug ดู (Optional)
+    // const data = Object.fromEntries(formData);
+    // console.log(data);
+
     try {
-      await axios.post(`${apiUrl}/api/admin/users`, data, config);
+      // ต้องระบุ Content-Type เป็น multipart/form-data สำหรับ upload ไฟล์
+      await axios.post(`${apiUrl}/api/admin/users`, formData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "multipart/form-data",
+        },
+      });
+
       Swal.fire({
         title: "สำเร็จ!",
         text: "เพิ่มพนักงานเรียบร้อยแล้ว",
         icon: "success",
         confirmButtonColor: "#1E2A45",
       });
+
       fetchUsers();
       e.target.reset();
+      setPreviewUrl(null);
+      setSelectedImage(null);
       setShowModal(false);
     } catch (error) {
-      Swal.fire("Error", "เพิ่มไม่สำเร็จ", "error");
+      console.error(error);
+      Swal.fire(
+        "Error",
+        error.response?.data?.message || "เพิ่มไม่สำเร็จ",
+        "error"
+      );
     }
   };
 
+  // ... handleDeleteUser และ handleEditClick เหมือนเดิม ...
   const handleDeleteUser = async (id) => {
+    /* ... logic เดิม ... */
     const result = await Swal.fire({
       title: "ยืนยันการนำออก?",
       text: "พนักงานจะย้ายไปอยู่ในรายการที่ถูกลบ",
@@ -96,9 +170,10 @@ function ManageEmployees() {
   };
 
   const handleEditClick = (user) => {
+    /* ... logic เดิม ... */
     Swal.fire({
       title: "Edit Info",
-      text: `กำลังเตรียมข้อมูลของ: ${user.name}`,
+      text: `กำลังเตรียมข้อมูลของ: ${user.name_th || user.name}`, // ปรับให้รองรับ name_th
       icon: "info",
       confirmButtonColor: "#1E2A45",
     });
@@ -106,7 +181,7 @@ function ManageEmployees() {
 
   return (
     <div className="manage-container p-4 fade-in">
-      {/* --- Header Section --- */}
+      {/* --- Header Section (เหมือนเดิม) --- */}
       <div className="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-5 gap-3">
         <div>
           <h2
@@ -119,9 +194,7 @@ function ManageEmployees() {
             จัดการรายชื่อและสิทธิ์การใช้งานของพนักงาน
           </p>
         </div>
-
         <div className="d-flex flex-column flex-sm-row gap-3">
-          {/* Custom Search */}
           <div className="search-wrapper">
             <span className="material-symbols-outlined search-icon">
               search
@@ -134,7 +207,6 @@ function ManageEmployees() {
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-
           <button
             className="btn-add-employee"
             onClick={() => setShowModal(true)}
@@ -145,7 +217,7 @@ function ManageEmployees() {
         </div>
       </div>
 
-      {/* --- Filter Toggle --- */}
+      {/* --- Filter Toggle (เหมือนเดิม) --- */}
       <div className="d-flex justify-content-end mb-3">
         <label className="custom-switch">
           <span
@@ -316,7 +388,7 @@ function ManageEmployees() {
         </div>
       </div>
 
-      {/* --- Modal Add User --- */}
+      {/* --- Modal Add User (Updated) --- */}
       {showModal && (
         <>
           <div
@@ -332,7 +404,9 @@ function ManageEmployees() {
             tabIndex="-1"
             style={{ zIndex: 1055 }}
           >
-            <div className="modal-dialog modal-dialog-centered">
+            <div className="modal-dialog modal-dialog-centered modal-lg">
+              {" "}
+              {/* ใช้ modal-lg ให้กว้างขึ้น */}
               <div className="modal-content custom-modal-content">
                 <div className="custom-modal-header d-flex justify-content-between align-items-center">
                   <div>
@@ -340,7 +414,7 @@ function ManageEmployees() {
                       เพิ่มพนักงานใหม่
                     </h5>
                     <p className="m-0 text-muted small">
-                      กรอกข้อมูลเพื่อสร้างบัญชีผู้ใช้ใหม่
+                      กรอกข้อมูลให้ครบถ้วนเพื่อสร้างบัญชี
                     </p>
                   </div>
                   <button
@@ -351,65 +425,202 @@ function ManageEmployees() {
                 </div>
 
                 <div className="modal-body p-4">
-                  <form onSubmit={handleAddUser}>
-                    <div className="row g-3">
-                      <div className="col-12">
-                        <label className="form-label text-muted small fw-bold text-uppercase">
-                          ชื่อ-นามสกุล
-                        </label>
-                        <input
-                          name="name"
-                          className="form-control form-control-custom"
-                          placeholder="เช่น สมชาย ใจดี"
-                          required
-                        />
-                      </div>
-                      <div className="col-12">
-                        <label className="form-label text-muted small fw-bold text-uppercase">
-                          Email
-                        </label>
-                        <input
-                          name="email"
-                          type="email"
-                          className="form-control form-control-custom"
-                          placeholder="example@nite.com"
-                          required
-                        />
-                      </div>
-                      <div className="col-12">
-                        <label className="form-label text-muted small fw-bold text-uppercase">
-                          Password
-                        </label>
-                        <input
-                          name="password"
-                          type="password"
-                          className="form-control form-control-custom"
-                          placeholder="••••••••"
-                          required
-                        />
-                      </div>
-                      <div className="col-md-6">
-                        <label className="form-label text-muted small fw-bold text-uppercase">
-                          ตำแหน่ง
-                        </label>
-                        <input
-                          name="position"
-                          className="form-control form-control-custom"
-                          placeholder="เช่น Engineer"
-                        />
-                      </div>
-                      <div className="col-md-6">
-                        <label className="form-label text-muted small fw-bold text-uppercase">
-                          สิทธิ์การใช้งาน
-                        </label>
-                        <select
-                          name="role"
-                          className="form-select form-control-custom"
-                          style={{ backgroundImage: "none" }}
+                  <form onSubmit={handleAddUser} encType="multipart/form-data">
+                    <div className="row g-4">
+                      {/* --- Left Column: Image Upload --- */}
+                      <div className="col-md-4">
+                        <div className="form-section-title">รูปโปรไฟล์</div>
+                        <div
+                          className={`image-upload-area ${
+                            isDragActive ? "drag-active" : ""
+                          }`}
+                          onClick={() => fileInputRef.current.click()}
+                          onDragOver={handleDragOver}
+                          onDragLeave={handleDragLeave}
+                          onDrop={handleDrop}
                         >
-                          <option value="user">User</option>
-                          <option value="admin">Admin</option>
-                        </select>
+                          {previewUrl ? (
+                            <>
+                              <img
+                                src={previewUrl}
+                                alt="Preview"
+                                className="preview-image"
+                              />
+                              <button
+                                type="button"
+                                className="remove-image-btn"
+                                onClick={handleRemoveImage}
+                                title="ลบรูป"
+                              >
+                                <span className="material-symbols-outlined fs-6">
+                                  close
+                                </span>
+                              </button>
+                            </>
+                          ) : (
+                            <div className="upload-placeholder">
+                              <span className="material-symbols-outlined upload-icon">
+                                cloud_upload
+                              </span>
+                              <p className="m-0 small fw-bold text-dark">
+                                คลิก หรือ ลากไฟล์มาวาง
+                              </p>
+                              <p
+                                className="m-0"
+                                style={{ fontSize: "0.7rem", color: "#9ca3af" }}
+                              >
+                                JPG, PNG, WEBP (Max 2MB)
+                              </p>
+                            </div>
+                          )}
+                          <input
+                            type="file"
+                            name="profile_image"
+                            ref={fileInputRef}
+                            className="d-none"
+                            accept="image/*"
+                            onChange={handleFileSelect}
+                          />
+                        </div>
+                      </div>
+
+                      {/* --- Right Column: Inputs --- */}
+                      <div className="col-md-8">
+                        {/* ข้อมูลภาษาไทย */}
+                        <div className="form-section-title mt-0">
+                          ข้อมูลส่วนตัว (TH)
+                        </div>
+                        <div className="row g-2 mb-3">
+                          <div className="col-md-3">
+                            <select
+                              name="prefix_th"
+                              className="form-select form-control-custom"
+                            >
+                              <option value="นาย">นาย</option>
+                              <option value="นาง">นาง</option>
+                              <option value="นางสาว">นางสาว</option>
+                            </select>
+                          </div>
+                          <div className="col-md-4">
+                            <input
+                              name="name_th"
+                              className="form-control form-control-custom"
+                              placeholder="ชื่อจริง (ไทย)"
+                              required
+                            />
+                          </div>
+                          <div className="col-md-5">
+                            <input
+                              name="lastname_th"
+                              className="form-control form-control-custom"
+                              placeholder="นามสกุล (ไทย)"
+                              required
+                            />
+                          </div>
+                          <div className="col-md-12 mt-2">
+                            <input
+                              name="nickname_th"
+                              className="form-control form-control-custom"
+                              placeholder="ชื่อเล่น (ไทย)"
+                            />
+                          </div>
+                        </div>
+
+                        {/* ข้อมูลภาษาอังกฤษ */}
+                        <div className="form-section-title">
+                          Personal Info (EN)
+                        </div>
+                        <div className="row g-2 mb-3">
+                          <div className="col-md-3">
+                            <select
+                              name="prefix_en"
+                              className="form-select form-control-custom"
+                            >
+                              <option value="Mr.">Mr.</option>
+                              <option value="Mrs.">Mrs.</option>
+                              <option value="Miss">Miss</option>
+                            </select>
+                          </div>
+                          <div className="col-md-4">
+                            <input
+                              name="name_en"
+                              className="form-control form-control-custom"
+                              placeholder="First Name"
+                              required
+                            />
+                          </div>
+                          <div className="col-md-5">
+                            <input
+                              name="lastname_en"
+                              className="form-control form-control-custom"
+                              placeholder="Last Name"
+                              required
+                            />
+                          </div>
+                          <div className="col-md-12 mt-2">
+                            <input
+                              name="nickname_en"
+                              className="form-control form-control-custom"
+                              placeholder="Nickname (EN)"
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* --- Bottom Section: System Account --- */}
+                      <div className="col-12">
+                        <div className="form-section-title">
+                          ข้อมูลเข้าระบบ (System)
+                        </div>
+                        <div className="row g-3">
+                          <div className="col-md-6">
+                            <label className="form-label text-muted small fw-bold">
+                              Email
+                            </label>
+                            <input
+                              name="email"
+                              type="email"
+                              className="form-control form-control-custom"
+                              placeholder="employee@nite.com"
+                              required
+                            />
+                          </div>
+                          <div className="col-md-6">
+                            <label className="form-label text-muted small fw-bold">
+                              Password
+                            </label>
+                            <input
+                              name="password"
+                              type="password"
+                              className="form-control form-control-custom"
+                              placeholder="••••••••"
+                              required
+                            />
+                          </div>
+                          <div className="col-md-6">
+                            <label className="form-label text-muted small fw-bold">
+                              ตำแหน่ง (Position)
+                            </label>
+                            <input
+                              name="position"
+                              className="form-control form-control-custom"
+                              placeholder="เช่น Software Engineer"
+                            />
+                          </div>
+                          <div className="col-md-6">
+                            <label className="form-label text-muted small fw-bold">
+                              สิทธิ์การใช้งาน (Role)
+                            </label>
+                            <select
+                              name="role"
+                              className="form-select form-control-custom"
+                              style={{ backgroundImage: "none" }}
+                            >
+                              <option value="user">User (พนักงานทั่วไป)</option>
+                              <option value="admin">Admin (ผู้ดูแลระบบ)</option>
+                            </select>
+                          </div>
+                        </div>
                       </div>
                     </div>
 
@@ -423,7 +634,7 @@ function ManageEmployees() {
                           borderRadius: "10px",
                         }}
                       >
-                        บันทึกข้อมูล
+                        บันทึกข้อมูลพนักงาน
                       </button>
                       <button
                         type="button"
