@@ -25,7 +25,7 @@ function Login() {
       Swal.fire({
         icon: "success",
         title: "Welcome Back!",
-        text: `สวัสดีคุณ ${res.data.user.name}`,
+        text: `สวัสดีคุณ ${res.data.user.name_th} ${res.data.user.lastname_th}`,
         timer: 2000,
         showConfirmButton: false,
       });

@@ -142,7 +142,7 @@
 }
 
 /* Active Indicator (จุดเล็กๆ ด้านขวา) */
-.menu-link.active::after {
+/* .menu-link.active::after {
   content: "";
   position: absolute;
   right: 12px;
@@ -151,7 +151,7 @@
   background-color: var(--nite-yellow);
   border-radius: 50%;
   box-shadow: 0 0 8px rgba(255, 189, 40, 0.6);
-}
+} */
 
 /* --- Closed State Adjustments --- */
 .admin-sidebar.closed .menu-link {

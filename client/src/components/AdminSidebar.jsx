@@ -12,7 +12,8 @@ const AdminSidebar = () => {
 
   // --- ส่วนที่แก้ไข (Safe Data Access) ---
   // ตรวจสอบว่า user มีอยู่จริงไหม ถ้าไม่มีให้ใช้ค่า Default ป้องกัน Error
-  const userName = user?.name || "Admin User";
+  const userName =
+    (user?.name_th || "") + " " + (user?.lastname_th || "") || "Lorem";
   const userRole = user?.role || "Administrator";
   // ใช้ profile_image จาก DB ถ้ามี ถ้าไม่มีใช้ null
   const userAvatar = user?.profile_image

@@ -1,0 +1,238 @@
+/* ManageShifts.css */
+@import url("https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap");
+
+.manage-shifts-container {
+  font-family: "Kanit", sans-serif;
+  background-color: #f8f9fa;
+  min-height: 100vh;
+  padding-bottom: 40px;
+  color: #1e2a45;
+}
+
+/* --- Header --- */
+.page-header {
+  background: white;
+  padding: 24px;
+  border-radius: 20px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+  margin-bottom: 30px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+
+.header-title h2 {
+  font-weight: 700;
+  color: #1e2a45;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* --- Shift Card Grid --- */
+.shifts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 24px;
+}
+
+.shift-card {
+  background: white;
+  border-radius: 20px;
+  padding: 24px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.shift-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+  border-color: #cbd5e1;
+}
+
+/* แถบสีด้านซ้ายบ่งบอกช่วงเวลา */
+.shift-card::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 6px;
+  background: #cbd5e1;
+}
+
+.shift-card.morning::before {
+  background: linear-gradient(to bottom, #10b981, #34d399);
+}
+.shift-card.afternoon::before {
+  background: linear-gradient(to bottom, #f59e0b, #fbbf24);
+}
+.shift-card.night::before {
+  background: linear-gradient(to bottom, #6366f1, #818cf8);
+}
+
+.shift-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+}
+
+.shift-name {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #1e2a45;
+}
+
+.shift-badge {
+  font-size: 0.75rem;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-weight: 600;
+  background: #f1f5f9;
+  color: #64748b;
+  text-transform: uppercase;
+}
+
+.shift-time-row {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 16px;
+}
+
+.time-box {
+  background: #f8fafc;
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  text-align: center;
+}
+
+.time-label {
+  font-size: 0.7rem;
+  color: #94a3b8;
+  display: block;
+  margin-bottom: 2px;
+  text-transform: uppercase;
+}
+
+.time-value {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #1e2a45;
+  font-family: monospace; /* ให้ตัวเลขดู Tech */
+}
+
+.shift-details {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.detail-tag {
+  font-size: 0.8rem;
+  padding: 4px 10px;
+  background: #f1f5f9;
+  border-radius: 6px;
+  color: #475569;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.shift-actions {
+  display: flex;
+  gap: 10px;
+  border-top: 1px solid #f1f5f9;
+  padding-top: 16px;
+}
+
+/* --- Modal Form Styles --- */
+.form-section-title {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #0d6efd;
+  margin-bottom: 15px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #eff6ff;
+  padding: 8px 12px;
+  border-radius: 8px;
+}
+
+.day-selector {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.day-chk-label {
+  cursor: pointer;
+  flex: 1;
+}
+
+.day-chk-input {
+  display: none;
+}
+
+.day-chk-box {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  font-weight: 600;
+  color: #64748b;
+  transition: all 0.2s;
+  font-size: 0.9rem;
+}
+
+.day-chk-input:checked + .day-chk-box {
+  background: #0d6efd;
+  color: white;
+  border-color: #0d6efd;
+  box-shadow: 0 4px 10px rgba(13, 110, 253, 0.3);
+}
+
+.alert-modern {
+  border-radius: 12px;
+  border: none;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  font-size: 0.9rem;
+}
+
+.alert-modern.warning {
+  background: #fffbeb;
+  color: #92400e;
+}
+
+.btn-modern {
+  border-radius: 10px;
+  padding: 10px 20px;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+
+.btn-modern-primary {
+  background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);
+  color: white;
+  border: none;
+  box-shadow: 0 4px 12px rgba(13, 110, 253, 0.3);
+}
+
+.btn-modern-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(13, 110, 253, 0.4);
+}

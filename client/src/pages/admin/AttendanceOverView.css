@@ -1,0 +1,391 @@
+/* AttendanceOverView.css */
+@import url("https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap");
+
+:root {
+  /* Bootstrap 5 Base Colors with Modern Twist */
+  --bs-primary: #0d6efd;
+  --bs-success: #198754;
+  --bs-warning: #ffc107;
+  --bs-danger: #dc3545;
+  --bs-info: #0dcaf0;
+  --bs-light: #f8f9fa;
+  --bs-dark: #212529;
+
+  /* Modern Backgrounds */
+  --bg-body: #f1f5f9; /* สีพื้นหลังเทาอมฟ้าจางๆ ดูสะอาด */
+  --card-bg: #ffffff;
+
+  /* Shadows "Rich & High-Tech" */
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 8px 24px rgba(149, 157, 165, 0.1); /* เงานุ่มลึก */
+  --shadow-hover: 0 12px 32px rgba(13, 110, 253, 0.15); /* เงาสีฟ้าจางๆ ตอน Hover */
+}
+
+.overview-container {
+  background-color: var(--bg-body);
+  min-height: 100vh;
+  font-family: "Kanit", sans-serif;
+  color: var(--bs-dark);
+  padding-bottom: 40px;
+}
+
+/* --- Stats Cards (Gradient Style) --- */
+.stat-card {
+  background: var(--card-bg);
+  border-radius: 20px;
+  padding: 24px;
+  box-shadow: var(--shadow-md);
+  border: none;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  height: 100%;
+}
+
+.stat-card:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--shadow-hover);
+}
+
+.stat-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background: var(--bs-primary); /* Default bar color */
+  border-radius: 4px 0 0 4px;
+}
+
+/* Modifier Classes for Border Colors */
+.stat-card.primary::before {
+  background: linear-gradient(to bottom, #0d6efd, #0a58ca);
+}
+.stat-card.success::before {
+  background: linear-gradient(to bottom, #198754, #146c43);
+}
+.stat-card.warning::before {
+  background: linear-gradient(to bottom, #ffc107, #ffca2c);
+}
+.stat-card.danger::before {
+  background: linear-gradient(to bottom, #dc3545, #b02a37);
+}
+
+.stat-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 15px;
+}
+
+.stat-title {
+  font-size: 0.95rem;
+  color: #6c757d;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.stat-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  /* Glassmorphism Icon Background */
+  background: rgba(13, 110, 253, 0.1);
+  color: var(--bs-primary);
+}
+
+.stat-card.success .stat-icon {
+  background: rgba(25, 135, 84, 0.1);
+  color: var(--bs-success);
+}
+.stat-card.warning .stat-icon {
+  background: rgba(255, 193, 7, 0.1);
+  color: #d6a100;
+}
+.stat-card.danger .stat-icon {
+  background: rgba(220, 53, 69, 0.1);
+  color: var(--bs-danger);
+}
+
+.stat-value {
+  font-size: 2.5rem;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--bs-dark);
+}
+
+/* --- Charts Section --- */
+.chart-card {
+  background: var(--card-bg);
+  border-radius: 24px;
+  padding: 28px;
+  box-shadow: var(--shadow-md);
+  border: none;
+  height: 100%;
+}
+
+.chart-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.chart-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--bs-dark);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.chart-title::before {
+  content: "";
+  display: block;
+  width: 8px;
+  height: 24px;
+  background: linear-gradient(to bottom, #0d6efd, #0dcaf0);
+  border-radius: 4px;
+}
+
+/* --- Controls & Filter --- */
+.control-bar {
+  background: var(--card-bg);
+  padding: 16px 24px;
+  border-radius: 16px;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 15px;
+  margin-bottom: 30px;
+}
+
+.form-select-modern {
+  border: 1px solid #dee2e6;
+  border-radius: 10px;
+  padding: 10px 16px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--bs-dark);
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  background-size: 16px 12px;
+  appearance: none;
+  min-width: 180px;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+.form-select-modern:focus {
+  border-color: var(--bs-primary);
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.15);
+}
+
+.btn-modern-primary {
+  background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);
+  color: white;
+  border: none;
+  padding: 10px 24px;
+  border-radius: 10px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 4px 12px rgba(13, 110, 253, 0.3);
+  transition: all 0.2s;
+}
+
+.btn-modern-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(13, 110, 253, 0.4);
+  color: white;
+}
+
+/* --- Table Section --- */
+.table-card {
+  background: var(--card-bg);
+  border-radius: 24px;
+  box-shadow: var(--shadow-md);
+  overflow: hidden;
+  border: none;
+}
+
+.table-header {
+  padding: 24px;
+  background: white;
+  border-bottom: 1px solid #f1f5f9;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.search-modern-wrapper {
+  position: relative;
+  width: 300px;
+}
+
+.search-modern-input {
+  width: 100%;
+  padding: 10px 16px 10px 45px;
+  border: 1px solid #e9ecef;
+  border-radius: 50px;
+  background: #f8f9fa;
+  font-size: 0.95rem;
+  transition: all 0.3s;
+}
+
+.search-modern-input:focus {
+  background: white;
+  border-color: var(--bs-primary);
+  box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.1);
+  outline: none;
+}
+
+.search-icon {
+  position: absolute;
+  left: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #adb5bd;
+}
+
+/* Modern Table Styles */
+.table-modern {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.table-modern thead th {
+  background: #f8f9fa;
+  color: #6c757d;
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.8rem;
+  letter-spacing: 0.5px;
+  padding: 16px 24px;
+  border-bottom: 2px solid #e9ecef;
+}
+
+.table-modern tbody td {
+  padding: 20px 24px;
+  vertical-align: middle;
+  border-bottom: 1px solid #f1f5f9;
+  color: var(--bs-dark);
+  font-size: 0.95rem;
+}
+
+.table-modern tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.table-modern tbody tr:hover {
+  background-color: #fcfcfc;
+}
+
+/* Status Badges (Pill Shape) */
+.status-pill {
+  padding: 6px 14px;
+  border-radius: 50px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.status-pill.ontime {
+  background: #d1e7dd;
+  color: #025a31;
+}
+.status-pill.late {
+  background: #fff3cd;
+  color: #ff9500;
+}
+.status-pill.leave {
+  background: #cfe2ff;
+  color: #084298;
+}
+.status-pill.absent {
+  background: #f8d7da;
+  color: #842029;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+/* ... (CSS เดิมคงไว้) ... */
+
+/* --- Digital Clock --- */
+.digital-clock {
+  font-family: "Courier New", Courier, monospace; /* ฟอนต์แบบ Monospace ดู Tech */
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--bs-primary);
+  background: rgba(13, 110, 253, 0.1);
+  padding: 8px 16px;
+  border-radius: 8px;
+  letter-spacing: 2px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* --- Status Pulse Animation (สำหรับคนที่กำลังทำงาน) --- */
+.status-pill.working {
+  background: #e0f2fe;
+  color: #0284c7;
+  position: relative;
+}
+
+.status-dot.pulse {
+  animation: pulse-animation 2s infinite;
+}
+
+@keyframes pulse-animation {
+  0% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(2, 132, 199, 0.7);
+  }
+  70% {
+    transform: scale(1);
+    box-shadow: 0 0 0 6px rgba(2, 132, 199, 0);
+  }
+  100% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(2, 132, 199, 0);
+  }
+}
+
+/* --- Shift Badge --- */
+.shift-badge {
+  font-size: 0.75rem;
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: #f1f5f9;
+  color: #64748b;
+  border: 1px solid #e2e8f0;
+  display: inline-block;
+  margin-top: 4px;
+}
+
+/* --- Tooltip/Action Button Group --- */
+.action-btn:hover {
+  background-color: var(--bs-primary);
+  color: white;
+}
