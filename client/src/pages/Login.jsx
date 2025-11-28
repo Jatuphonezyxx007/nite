@@ -27,14 +27,14 @@ function Login() {
         icon: "success",
         title: "Welcome Back!",
         text: `สวัสดีคุณ ${res.data.user.name_th} ${res.data.user.lastname_th}`,
-        timer: 2000,
+        timer: 3000,
         showConfirmButton: false,
       });
 
       if (res.data.user.role === "admin") {
         navigate("/admin");
       } else {
-        navigate("/");
+        navigate("/home");
       }
     } catch (err) {
       Swal.fire(
@@ -83,7 +83,6 @@ function Login() {
                     <label htmlFor="floatingInput" className="text-muted">
                       {/* เปลี่ยน Icon และ Label */}
                       <i className="bi bi-person-badge me-2"></i>รหัสพนักงาน
-                      (Employee Code)
                     </label>
                   </div>
 

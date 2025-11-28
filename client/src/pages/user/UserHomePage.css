@@ -1,0 +1,47 @@
+/* UserHomePage.css */
+
+/* ทำให้ปุ่มมี effect ยุบยืดเล็กน้อย */
+.hover-scale {
+  transition: transform 0.2s;
+}
+.hover-scale:hover {
+  transform: scale(1.05);
+}
+
+/* Overlay พื้นหลังดำจางๆ เวลาเปิดกล้อง */
+.camera-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.8);
+  z-index: 1050; /* สูงกว่า Navbar */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* กล่องใส่กล้อง */
+.camera-container {
+  width: 90%;
+  max-width: 500px;
+  animation: slideUp 0.3s ease-out;
+}
+
+.webcam-wrapper video {
+  width: 100%;
+  height: auto;
+  border-radius: 10px;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(50px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}

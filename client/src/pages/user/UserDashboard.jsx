@@ -48,16 +48,8 @@ function UserDashboard() {
   };
 
   return (
-    <div className="container mt-4">
-      <div className="d-flex justify-content-between align-items-center mb-3">
-        <h2>สวัสดี, {user?.name_th}</h2>
-        <button onClick={logout} className="btn btn-outline-danger">
-          Logout
-        </button>
-      </div>
-
+    <div className="container mt-5 pt-5">
       <div className="row">
-        {/* ฝั่งซ้าย: ลงเวลา */}
         <div className="col-md-5 mb-4">
           <div className="card shadow-sm">
             <div className="card-header bg-primary text-white">
@@ -78,7 +70,6 @@ function UserDashboard() {
           </div>
         </div>
 
-        {/* ฝั่งขวา: ประวัติ */}
         <div className="col-md-7">
           <div className="card shadow-sm">
             <div className="card-header bg-secondary text-white">

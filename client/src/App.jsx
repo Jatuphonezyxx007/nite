@@ -3,6 +3,9 @@ import { AuthProvider, AuthContext } from "./context/AuthContext";
 import { useContext } from "react";
 import Login from "./pages/Login";
 import UserDashboard from "./pages/user/UserDashboard";
+import UserHome from "./pages/user/UserHomePage";
+
+import Navbar from "./components/Navbar";
 
 // Admin Components
 import AdminLayout from "./pages/AdminLayout";
@@ -16,7 +19,7 @@ import ManageShift from "./pages/admin/ManageShifts";
 
 const ProtectedRoute = ({ children, role }) => {
   const { user } = useContext(AuthContext);
-  if (!user) return <Navigate to="/login" />;
+  if (!user) return <Navigate to="/" />;
   if (role && user.role !== role) return <Navigate to="/" />;
   return children;
 };
@@ -26,7 +29,7 @@ function App() {
     <AuthProvider>
       <BrowserRouter>
         <Routes>
-          <Route path="/login" element={<Login />} />
+          <Route path="/" element={<Login />} />
 
           {/* --- Admin Routes --- */}
           <Route
@@ -64,9 +67,20 @@ function App() {
 
           {/* --- User Route --- */}
           <Route
-            path="/"
+            path="/home"
             element={
               <ProtectedRoute>
+                <Navbar />
+                <UserHome />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/time-stamp"
+            element={
+              <ProtectedRoute>
+                <Navbar />
                 <UserDashboard />
               </ProtectedRoute>
             }

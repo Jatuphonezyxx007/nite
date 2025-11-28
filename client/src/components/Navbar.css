@@ -1,0 +1,251 @@
+/* Navbar.css */
+@import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap");
+
+:root {
+  --nav-height: 80px;
+  --primary-glow: radial-gradient(
+    circle at center,
+    rgba(99, 102, 241, 0.15) 0%,
+    transparent 70%
+  );
+  --accent-gradient: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+  --glass-bg: rgba(255, 255, 255, 0.8);
+  --glass-border: 1px solid rgba(255, 255, 255, 0.5);
+  --text-primary: #0f172a;
+  --text-secondary: #64748b;
+}
+
+body {
+  font-family: "Plus Jakarta Sans", sans-serif; /* แนะนำฟอนต์นี้ถ้าอยากให้ดู Inter */
+}
+
+/* --- 1. The Navbar Layout --- */
+.premium-navbar {
+  height: var(--nav-height);
+  padding: 0;
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  background: transparent; /* เริ่มต้นแบบใส */
+  border-bottom: 1px solid transparent;
+}
+
+/* สถานะเมื่อ Scrolled (Javascript จะเติม class นี้) */
+.premium-navbar.scrolled {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(226, 232, 240, 0.6);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.03);
+  height: 70px; /* ย่อขนาดลงนิดนึงให้ดู compact */
+}
+
+/* --- 2. Logo Animation --- */
+.brand-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+}
+
+.brand-logo-bg {
+  width: 42px;
+  height: 42px;
+  background: var(--accent-gradient);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 1.2rem;
+  box-shadow: 0 8px 16px rgba(59, 130, 246, 0.25);
+  transition: transform 0.3s ease;
+}
+
+.brand-wrapper:hover .brand-logo-bg {
+  transform: scale(1.05) rotate(-3deg);
+}
+
+.brand-text {
+  font-size: 1.25rem;
+  font-weight: 800;
+  background: linear-gradient(to right, #1e293b, #3b82f6);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  letter-spacing: -0.5px;
+}
+
+/* --- 3. Navigation Links (The Glow Effect) --- */
+.nav-link-modern {
+  position: relative;
+  font-weight: 600;
+  color: var(--text-secondary) !important;
+  padding: 0.6rem 1rem !important;
+  margin: 0 4px;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* พื้นหลังเรืองแสงเวลา Hover (ซ่อนไว้ก่อน) */
+.nav-link-modern::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(59, 130, 246, 0.08);
+  transform: scale(0.8);
+  opacity: 0;
+  border-radius: 8px;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  z-index: -1;
+}
+
+.nav-link-modern:hover {
+  color: #3b82f6 !important;
+  transform: translateY(-1px);
+}
+
+.nav-link-modern:hover::before {
+  transform: scale(1);
+  opacity: 1;
+}
+
+.nav-link-modern.active {
+  color: #2563eb !important;
+  background: rgba(37, 99, 235, 0.08);
+}
+
+.nav-link-modern.active::after {
+  content: "";
+  position: absolute;
+  bottom: -2px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 20px;
+  height: 3px;
+  background: #2563eb;
+  border-radius: 10px;
+}
+
+/* --- 4. User Profile (Minimalist) --- */
+.profile-trigger {
+  padding: 6px;
+  padding-right: 16px;
+  border-radius: 50px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  background: white;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.profile-trigger:hover {
+  border-color: #bfdbfe;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+}
+
+.avatar-circle {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid white;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.profile-info {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+}
+.profile-name {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #1e293b;
+}
+.profile-role {
+  font-size: 0.7rem;
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+/* --- 5. Dropdown Animation (Float Up) --- */
+.animate-dropdown {
+  border: none;
+  border-radius: 16px;
+  box-shadow: 0 20px 40px -5px rgba(0, 0, 0, 0.1),
+    0 10px 20px -5px rgba(0, 0, 0, 0.04);
+  padding: 8px;
+  margin-top: 12px !important;
+  min-width: 240px;
+  animation: slideUpFade 0.3s ease forwards;
+}
+
+.dropdown-item-modern {
+  padding: 10px 16px;
+  border-radius: 10px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  transition: all 0.2s;
+}
+
+.dropdown-item-modern:hover {
+  background: #f1f5f9;
+  color: #3b82f6;
+  transform: translateX(2px);
+}
+
+.dropdown-item-modern.logout-btn {
+  color: #ef4444;
+}
+.dropdown-item-modern.logout-btn:hover {
+  background: #fef2f2;
+}
+
+@keyframes slideUpFade {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Mobile Toggler */
+.navbar-toggler {
+  border: none;
+  outline: none;
+  box-shadow: none !important;
+}
+.hamburger-line {
+  display: block;
+  width: 24px;
+  height: 2px;
+  background: #333;
+  margin: 5px 0;
+  transition: 0.3s;
+}
+
+/* Responsive Fixes */
+@media (max-width: 991px) {
+  .premium-navbar {
+    background: white;
+    height: auto;
+    padding: 10px 0;
+  }
+  .navbar-collapse {
+    background: white;
+    padding: 20px;
+    border-radius: 0 0 20px 20px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+  }
+}
