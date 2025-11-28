@@ -2,7 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, AuthContext } from "./context/AuthContext";
 import { useContext } from "react";
 import Login from "./pages/Login";
-import UserDashboard from "./pages/UserDashboard";
+import UserDashboard from "./pages/user/UserDashboard";
 
 // Admin Components
 import AdminLayout from "./pages/AdminLayout";

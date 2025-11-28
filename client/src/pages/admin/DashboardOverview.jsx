@@ -78,7 +78,11 @@ function DashboardOverview() {
           <table className="table table-hover mb-0 align-middle">
             <thead className="table-light">
               <tr>
-                <th className="ps-4">ชื่อพนักงาน</th>
+                {/* 1. เพิ่มหัวตารางสำหรับลำดับ */}
+                <th className="ps-4 text-center" style={{ width: "60px" }}>
+                  ลำดับ
+                </th>
+                <th>ชื่อพนักงาน</th>
                 <th>เวลา</th>
                 <th>สถานะ</th>
                 <th>รูปถ่าย</th>
@@ -88,7 +92,36 @@ function DashboardOverview() {
               {stats.recentActivity?.length > 0 ? (
                 stats.recentActivity.map((log, index) => (
                   <tr key={index}>
-                    <td className="ps-4 fw-medium">{log.name}</td>
+                    {/* 2. แสดงลำดับ โดยใช้ index + 1 */}
+                    <td className="ps-4 text-muted fw-light text-center">
+                      {index + 1}
+                    </td>
+
+                    <td className="align-middle">
+                      {/* 3. เพิ่ม 'align-items-start' เพื่อบังคับให้ทุกอย่างในกล่องนี้ชิดซ้าย */}
+                      <div className="d-flex flex-column justify-content-center align-items-start">
+                        {/* ส่วนชื่อ-นามสกุล */}
+                        <div className="mb-1 text-nowrap">
+                          <span className="fw-semibold text-dark">
+                            {log.name_th
+                              ? `${log.name_th} ${log.lastname_th}`
+                              : "-"}
+                          </span>
+                          {log.nickname_th && (
+                            <small className="text-body-secondary ms-2 fw-normal">
+                              ({log.nickname_th})
+                            </small>
+                          )}
+                        </div>
+
+                        {/* รหัสพนักงาน (เอา div ที่ซ้อนกันออก เพื่อให้ align-items-start ของแม่ทำงานได้ตรงๆ) */}
+                        <span className="badge bg-light text-secondary border rounded-pill fw-normal d-inline-flex align-items-center px-2 py-1">
+                          <i className="bi bi-person-badge me-1"></i>
+                          <span>{log.emp_code || "No ID"}</span>
+                        </span>
+                      </div>
+                    </td>
+
                     <td>
                       {new Date(log.clock_in).toLocaleTimeString("th-TH")}
                     </td>
@@ -106,6 +139,7 @@ function DashboardOverview() {
                         <img
                           src={log.clock_in_image}
                           className="rounded-circle border"
+                          alt="clock-in"
                           style={{
                             width: "40px",
                             height: "40px",
@@ -120,13 +154,14 @@ function DashboardOverview() {
                 ))
               ) : (
                 <tr>
-                  <td colSpan="4" className="text-center py-4 text-muted">
+                  {/* อย่าลืมปรับ colSpan เป็น 5 เพราะเราเพิ่มมา 1 คอลัมน์ */}
+                  <td colSpan="5" className="text-center py-4 text-muted">
                     ยังไม่มีข้อมูล
                   </td>
                 </tr>
               )}
             </tbody>
-          </table>
+          </table>{" "}
         </div>
       </div>
     </div>

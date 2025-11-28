@@ -239,7 +239,7 @@ router.get("/stats", verifyAdmin, async (req, res) => {
     // ดึงรายการคนเข้างานวันนี้ล่าสุด 5 คน (join เพื่อเอาชื่อ)
     const [recent] = await db.query(
       `
-            SELECT a.*, u.name_th 
+            SELECT a.*, u.name_th, u.lastname_th, u.emp_code, u.nickname_th 
             FROM attendance a 
             JOIN users u ON a.user_id = u.id 
             WHERE a.date = ? 

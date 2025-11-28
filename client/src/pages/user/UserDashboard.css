@@ -1,0 +1,48 @@
+/* UserDashboard.css */
+
+/* ปรับแต่ง Profile Image ให้มีขอบและเงาสวยงาม */
+.profile-img-card {
+  width: 110px;
+  height: 110px;
+  object-fit: cover;
+  border: 4px solid #fff;
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+/* พื้นหลัง Header แบบ Gradient */
+.dashboard-header {
+  background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);
+  color: white;
+  border: none;
+}
+
+/* ปรับแต่ง Card ให้มุมโค้งมนและมีเงา */
+.custom-card {
+  border: none;
+  border-radius: 1rem;
+  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+  transition: transform 0.2s;
+  background-color: #fff;
+}
+
+.custom-card:hover {
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);
+}
+
+/* ปรับแต่ง Webcam Container */
+.webcam-container {
+  border-radius: 0.5rem;
+  overflow: hidden;
+  background-color: #f8f9fa;
+  border: 2px dashed #dee2e6;
+  min-height: 250px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* สถานะ Text */
+.text-label {
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.8);
+}

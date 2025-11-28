@@ -1,8 +1,8 @@
 import { useState, useEffect, useContext } from "react";
-import WebcamCapture from "../components/WebcamCapture";
+import WebcamCapture from "../../components/WebcamCapture";
 import axios from "axios";
 import Swal from "sweetalert2";
-import { AuthContext } from "../context/AuthContext";
+import { AuthContext } from "../../context/AuthContext";
 
 function UserDashboard() {
   const { user, logout } = useContext(AuthContext);
@@ -50,7 +50,7 @@ function UserDashboard() {
   return (
     <div className="container mt-4">
       <div className="d-flex justify-content-between align-items-center mb-3">
-        <h2>สวัสดี, {user?.name}</h2>
+        <h2>สวัสดี, {user?.name_th}</h2>
         <button onClick={logout} className="btn btn-outline-danger">
           Logout
         </button>
