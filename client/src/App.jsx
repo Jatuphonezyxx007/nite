@@ -1,4 +1,11 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+// 1. เพิ่ม Outlet ใน import
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+  Navigate,
+  Outlet,
+} from "react-router-dom";
 import { AuthProvider, AuthContext } from "./context/AuthContext";
 import { useContext } from "react";
 import Login from "./pages/Login";
@@ -11,7 +18,6 @@ import Navbar from "./components/Navbar";
 import AdminLayout from "./pages/AdminLayout";
 import DashboardOverview from "./pages/admin/DashboardOverview";
 import ManageEmployees from "./pages/admin/ManageEmployees";
-// import AttendanceCheck from "./pages/admin/AttendanceCheck"; // อาจจะไม่ได้ใช้แล้วถ้ามีหน้ารายละเอียด
 import Settings from "./pages/admin/Settings";
 import AttendanceOverView from "./pages/admin/AttendanceOverView";
 import ManageTime from "./pages/admin/ManageTime";
@@ -26,12 +32,12 @@ const ProtectedRoute = ({ children, role }) => {
 
 const UserLayout = () => {
   return (
-    <ProtectedRoute>
+    <>
       <Navbar />
       <div className="container mx-auto p-4">
         <Outlet />
       </div>
-    </ProtectedRoute>
+    </>
   );
 };
 
