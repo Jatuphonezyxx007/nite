@@ -140,7 +140,9 @@ function ManageShifts() {
       <div className="page-header">
         <div className="header-title">
           <h2>
-            <span className="material-symbols-outlined fs-2 text-primary">
+            <span className="material-symbols-rounded fs-2 text-primary">
+              {" "}
+              {/* Updated */}
               schedule
             </span>
             Shift Management
@@ -159,7 +161,9 @@ function ManageShifts() {
               }`}
               onClick={() => setViewMode("grid")}
             >
-              <span className="material-symbols-outlined align-middle fs-6 me-1">
+              <span className="material-symbols-rounded align-middle fs-6 me-1">
+                {" "}
+                {/* Updated */}
                 grid_view
               </span>{" "}
               Grid
@@ -170,7 +174,9 @@ function ManageShifts() {
               }`}
               onClick={() => setViewMode("calendar")}
             >
-              <span className="material-symbols-outlined align-middle fs-6 me-1">
+              <span className="material-symbols-rounded align-middle fs-6 me-1">
+                {" "}
+                {/* Updated */}
                 calendar_month
               </span>{" "}
               Calendar
@@ -184,7 +190,8 @@ function ManageShifts() {
               setShowModal(true);
             }}
           >
-            <span className="material-symbols-outlined">add_circle</span>
+            <span className="material-symbols-rounded">add_circle</span>{" "}
+            {/* Updated */}
             สร้างกะใหม่
           </button>
         </div>
@@ -205,7 +212,9 @@ function ManageShifts() {
                   <span className="time-label">Start</span>
                   <span className="time-value">{shift.startTime}</span>
                 </div>
-                <span className="material-symbols-outlined text-muted">
+                <span className="material-symbols-rounded text-muted">
+                  {" "}
+                  {/* Updated */}
                   arrow_forward
                 </span>
                 <div className="time-box">
@@ -224,15 +233,19 @@ function ManageShifts() {
 
               <div className="shift-details">
                 <div className="detail-tag">
-                  <span className="material-symbols-outlined fs-6">coffee</span>{" "}
+                  <span className="material-symbols-rounded fs-6">coffee</span>{" "}
+                  {/* Updated */}
                   พัก {shift.breakTime} น.
                 </div>
                 <div className="detail-tag">
-                  <span className="material-symbols-outlined fs-6">group</span>{" "}
+                  <span className="material-symbols-rounded fs-6">group</span>{" "}
+                  {/* Updated */}
                   {shift.staffCount}/{shift.maxStaff} คน
                 </div>
                 <div className="detail-tag">
-                  <span className="material-symbols-outlined fs-6">
+                  <span className="material-symbols-rounded fs-6">
+                    {" "}
+                    {/* Updated */}
                     calendar_today
                   </span>{" "}
                   {shift.days.length} วัน/สัปดาห์
@@ -244,13 +257,17 @@ function ManageShifts() {
                   className="btn btn-light w-100 btn-sm text-primary fw-bold"
                   onClick={() => setShowModal(true)}
                 >
-                  <span className="material-symbols-outlined align-middle me-1">
+                  <span className="material-symbols-rounded align-middle me-1">
+                    {" "}
+                    {/* Updated */}
                     edit
                   </span>{" "}
                   แก้ไข
                 </button>
                 <button className="btn btn-light w-100 btn-sm text-danger fw-bold">
-                  <span className="material-symbols-outlined align-middle me-1">
+                  <span className="material-symbols-rounded align-middle me-1">
+                    {" "}
+                    {/* Updated */}
                     delete
                   </span>{" "}
                   ลบ
@@ -265,7 +282,7 @@ function ManageShifts() {
       {viewMode === "calendar" && (
         <div className="card border-0 shadow-sm p-5 text-center rounded-4">
           <span
-            className="material-symbols-outlined text-muted"
+            className="material-symbols-rounded text-muted" // Updated
             style={{ fontSize: "64px" }}
           >
             calendar_month
@@ -303,7 +320,9 @@ function ManageShifts() {
               <div className="modal-content border-0 shadow-lg rounded-4">
                 <div className="modal-header border-bottom-0 pb-0">
                   <h5 className="modal-title fw-bold text-dark d-flex align-items-center gap-2">
-                    <span className="material-symbols-outlined text-primary">
+                    <span className="material-symbols-rounded text-primary">
+                      {" "}
+                      {/* Updated */}
                       tune
                     </span>
                     ตั้งค่ากะการทำงาน (Configure Shift)
@@ -321,7 +340,9 @@ function ManageShifts() {
                       {/* 1. Basic Info */}
                       <div className="col-12">
                         <div className="form-section-title">
-                          <span className="material-symbols-outlined fs-6">
+                          <span className="material-symbols-rounded fs-6">
+                            {" "}
+                            {/* Updated */}
                             badge
                           </span>{" "}
                           ข้อมูลทั่วไป
@@ -362,7 +383,9 @@ function ManageShifts() {
                       {/* 2. Time Settings & Calculation */}
                       <div className="col-12">
                         <div className="form-section-title">
-                          <span className="material-symbols-outlined fs-6">
+                          <span className="material-symbols-rounded fs-6">
+                            {" "}
+                            {/* Updated */}
                             schedule
                           </span>{" "}
                           เวลาทำงาน
@@ -448,7 +471,9 @@ function ManageShifts() {
                                   key={idx}
                                   className="alert-modern warning p-2 mt-1"
                                 >
-                                  <span className="material-symbols-outlined">
+                                  <span className="material-symbols-rounded">
+                                    {" "}
+                                    {/* Updated */}
                                     warning
                                   </span>{" "}
                                   {warn}
@@ -462,7 +487,9 @@ function ManageShifts() {
                       {/* 3. Work Days Pattern */}
                       <div className="col-12">
                         <div className="form-section-title">
-                          <span className="material-symbols-outlined fs-6">
+                          <span className="material-symbols-rounded fs-6">
+                            {" "}
+                            {/* Updated */}
                             calendar_today
                           </span>{" "}
                           วันทำงาน
@@ -493,7 +520,9 @@ function ManageShifts() {
                       {/* 4. Staff Control */}
                       <div className="col-12">
                         <div className="form-section-title">
-                          <span className="material-symbols-outlined fs-6">
+                          <span className="material-symbols-rounded fs-6">
+                            {" "}
+                            {/* Updated */}
                             group_add
                           </span>{" "}
                           ควบคุมพนักงาน
@@ -557,7 +586,9 @@ function ManageShifts() {
                     className="btn btn-modern-primary rounded-3"
                     onClick={handleSave}
                   >
-                    <span className="material-symbols-outlined align-middle fs-6 me-1">
+                    <span className="material-symbols-rounded align-middle fs-6 me-1">
+                      {" "}
+                      {/* Updated */}
                       save
                     </span>{" "}
                     บันทึกข้อมูล

@@ -89,4 +89,60 @@ router.get("/dashboard-stats", authMiddleware, async (req, res) => {
   }
 });
 
+// GET /api/user/weekly-chart
+// ดึงข้อมูลสรุปชั่วโมงทำงานย้อนหลัง 7 วัน
+router.get("/weekly-chart", authMiddleware, async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    // 1. Query ดึงข้อมูลย้อนหลัง 7 วัน
+    // ใช้ DATEDIFF หรือ TIMESTAMPDIFF เพื่อหาผลรวมชั่วโมงในแต่ละวัน
+    const sql = `
+      SELECT 
+        DATE(date) as work_date,
+        CAST(SUM(TIMESTAMPDIFF(MINUTE, clock_in, clock_out)) / 60 AS DECIMAL(10,1)) as total_hours
+      FROM attendance 
+      WHERE user_id = ? 
+      AND date >= DATE_SUB(CURDATE(), INTERVAL 6 DAY)
+      AND clock_out IS NOT NULL
+      GROUP BY DATE(date)
+      ORDER BY work_date ASC
+    `;
+
+    const [rows] = await db.execute(sql, [userId]);
+
+    // 2. จัดรูปแบบข้อมูลให้ครบ 7 วัน (เผื่อวันที่ไม่ได้มาทำงาน ให้ค่าเป็น 0)
+    const chartData = [];
+    const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+    // วนลูปย้อนหลัง 6 วันจนถึงวันนี้
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      const dateStr = d.toISOString().split("T")[0]; // Format YYYY-MM-DD
+
+      // หาข้อมูลใน DB ที่ตรงกับวันนี้
+      const record = rows.find((row) => {
+        // แปลง date จาก DB เป็น string ให้ตรงกัน (อาจต้องปรับตาม timezone db)
+        const rowDate = new Date(row.work_date).toISOString().split("T")[0];
+        return rowDate === dateStr;
+      });
+
+      chartData.push({
+        day: days[d.getDay()], // ชื่อวัน (Mon, Tue)
+        date: dateStr,
+        hours: record ? parseFloat(record.total_hours) : 0,
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      data: chartData,
+    });
+  } catch (error) {
+    console.error("Error fetching weekly chart:", error);
+    return res.status(500).json({ success: false, message: "Server Error" });
+  }
+});
+
 module.exports = router;

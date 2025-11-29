@@ -8,6 +8,8 @@ const Dashboard = () => {
   const [currentTime, setCurrentTime] = useState(new Date());
   const { user } = useContext(AuthContext);
   const apiUrl = import.meta.env.VITE_API_URL;
+  const [weeklyChart, setWeeklyChart] = useState([]);
+  const maxChartScale = 12; // กำหนดเพดานกราฟ เช่น 12 ชั่วโมง = 100%
 
   // Mock logic คงเดิม
   // 1. ปรับ State ให้รองรับข้อมูลเริ่มต้น (Default values)
@@ -69,6 +71,26 @@ const Dashboard = () => {
     }
   };
 
+  // 3. ฟังก์ชันดึงข้อมูลกราฟใหม่
+  const fetchChartData = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const res = await axios.get(
+        `${import.meta.env.VITE_API_URL}/api/user/weekly-chart`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      if (res.data.success) {
+        // API ควรส่งกลับมาเป็น array เช่น: [{ day: 'Mon', hours: 8.5 }, ...]
+        setWeeklyChart(res.data.data);
+      }
+    } catch (error) {
+      console.error("Error fetching chart:", error);
+    }
+  };
+
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
 
@@ -119,30 +141,30 @@ const Dashboard = () => {
         <div className="row g-4 mb-5">
           {[
             {
-              label: "Total Hours",
-              value: `${stats.totalHours}h`, // 4. ค่าจะถูกอัปเดตตรงนี้อัตโนมัติ
-              sub: "Recorded work time",
+              label: "ชั่วโมงรวมทั้งหมด",
+              value: `${stats.totalHours} ชม.`,
+              sub: "เวลาทำงานที่บันทึกไว้ทั้งหมด",
               icon: "schedule",
               color: "blue",
             },
             {
-              label: "Daily Avg",
-              value: `${stats.averageHours}h`,
-              sub: "Per day worked",
+              label: "เฉลี่ยรายวัน",
+              value: `${stats.averageHours} ชม.`,
+              sub: "ชั่วโมงทำงานเฉลี่ยต่อวัน",
               icon: "bar_chart",
               color: "purple",
             },
             {
-              label: "On Time",
+              label: "ตรงเวลา",
               value: `${stats.onTimePercentage}%`,
-              sub: "Performance",
+              sub: "ประสิทธิภาพในการเข้างาน",
               icon: "check_circle",
               color: "green",
             },
             {
-              label: "Late Days",
+              label: "วันที่มาสาย",
               value: stats.lateDays,
-              sub: "Total late counts",
+              sub: "จำนวนครั้งที่มาสาย",
               icon: "warning",
               color: "orange",
             },
@@ -188,21 +210,50 @@ const Dashboard = () => {
                   Weekly Overview
                 </h5>
               </div>
+
               <div className="card-body px-4 pb-4 pt-0">
                 <div className="chart-placeholder-modern">
-                  {/* Mock Bars */}
-                  {[65, 80, 75, 90, 85, 40, 0].map((h, i) => (
-                    <div key={i} className="bar-group">
-                      <div className="bar" style={{ height: `${h}%` }}></div>
-                      <span className="day-label">
-                        {["M", "T", "W", "T", "F", "S", "S"][i]}
-                      </span>
+                  {/* 3. วนลูปแสดงผลกราฟจากข้อมูลจริง */}
+                  {weeklyChart.length > 0 ? (
+                    weeklyChart.map((item, index) => {
+                      // คำนวณความสูง (ห้ามเกิน 100%)
+                      let heightPercent = (item.hours / maxChartScale) * 100;
+                      if (heightPercent > 100) heightPercent = 100;
+
+                      // กำหนดสี: ถ้าทำ >= 8 ชม. สีม่วง, น้อยกว่า สีเหลือง
+                      const barColor =
+                        item.hours >= 8
+                          ? "linear-gradient(180deg, #6366f1 0%, #818cf8 100%)" // ม่วง
+                          : "linear-gradient(180deg, #f59e0b 0%, #fbbf24 100%)"; // เหลือง
+
+                      return (
+                        <div key={index} className="bar-group">
+                          {/* Tooltip ลอยเหนือแท่งกราฟ (Optional) */}
+                          <div
+                            className="bar"
+                            style={{
+                              height: `${heightPercent}%`,
+                              background: barColor, // Override สีใน CSS ด้วย Inline Style
+                              position: "relative",
+                              minHeight: "4px", // ให้เห็นขีดเล็กๆ แม้ค่าเป็น 0
+                            }}
+                            title={`${item.hours} hrs`} // เอาเมาส์ชี้แล้วขึ้นตัวเลข
+                          ></div>
+                          <span className="day-label">
+                            {item.day} {/* แสดงชื่อวัน Mon, Tue */}
+                          </span>
+                        </div>
+                      );
+                    })
+                  ) : (
+                    // Loading State หรือ Mock Data ระหว่างรอ
+                    <div className="text-center w-100 text-muted py-5">
+                      Loading Chart...
                     </div>
-                  ))}
+                  )}
                 </div>
               </div>
             </div>
-
             {/* Recent Attendance List */}
             <div className="card border-0 shadow-sm rounded-4">
               <div className="card-header bg-transparent border-0 p-4 d-flex justify-content-between align-items-center">

@@ -10,17 +10,16 @@ const AdminSidebar = () => {
   const [expandedMenu, setExpandedMenu] = useState(null);
   const location = useLocation();
 
-  // --- ส่วนที่แก้ไข (Safe Data Access) ---
-  // ตรวจสอบว่า user มีอยู่จริงไหม ถ้าไม่มีให้ใช้ค่า Default ป้องกัน Error
+  // --- Safe Data Access ---
   const userName =
     (user?.name_th || "") + " " + (user?.lastname_th || "") || "Lorem";
   const userRole = user?.role || "Administrator";
-  // ใช้ profile_image จาก DB ถ้ามี ถ้าไม่มีใช้ null
   const userAvatar = user?.profile_image
     ? `${import.meta.env.VITE_API_URL}/uploads/profile/${user.profile_image}`
     : null;
 
   // Menu Configuration
+  // หมายเหตุ: ชื่อ Icon (grid_view, group, schedule ฯลฯ) ใช้ร่วมกันได้เลย
   const menuItems = [
     { path: "/admin/dashboard", label: "Dashboard", icon: "grid_view" },
     { path: "/admin/users", label: "พนักงานทั้งหมด", icon: "group" },
@@ -78,7 +77,8 @@ const AdminSidebar = () => {
           onClick={() => setIsOpen(!isOpen)}
           title={isOpen ? "ย่อเมนู" : "ขยายเมนู"}
         >
-          <span className="material-symbols-outlined">
+          {/* เปลี่ยน class เป็น material-symbols-rounded */}
+          <span className="material-symbols-rounded">
             {isOpen ? "menu_open" : "menu"}
           </span>
         </button>
@@ -104,13 +104,14 @@ const AdminSidebar = () => {
                   aria-expanded={isExpanded}
                   style={{ cursor: "pointer" }}
                 >
-                  <span className={`material-symbols-outlined menu-icon`}>
+                  {/* เปลี่ยน class icon */}
+                  <span className={`material-symbols-rounded menu-icon`}>
                     {item.icon}
                   </span>
                   <span className="menu-text">{item.label}</span>
                   {isOpen && (
                     <span
-                      className={`material-symbols-outlined menu-arrow ${
+                      className={`material-symbols-rounded menu-arrow ${
                         isExpanded ? "rotated" : ""
                       }`}
                     >
@@ -127,7 +128,7 @@ const AdminSidebar = () => {
                   title={!isOpen ? item.label : ""}
                   onClick={() => setExpandedMenu(null)}
                 >
-                  <span className="material-symbols-outlined menu-icon">
+                  <span className="material-symbols-rounded menu-icon">
                     {item.icon}
                   </span>
                   <span className="menu-text">{item.label}</span>
@@ -144,6 +145,7 @@ const AdminSidebar = () => {
                           `submenu-link ${isActive ? "active" : ""}`
                         }
                       >
+                        {/* Submenu อาจจะไม่มี icon แต่ถ้ามีก็ใส่ material-symbols-rounded ได้ */}
                         {sub.label}
                       </NavLink>
                     </li>
@@ -169,7 +171,6 @@ const AdminSidebar = () => {
                 }}
               />
             ) : (
-              // Fallback Avatar: ใช้อักษรตัวแรกของชื่อ (Safe Access)
               <div
                 className="user-initial-avatar"
                 style={{
@@ -185,7 +186,6 @@ const AdminSidebar = () => {
                   fontSize: "1.2rem",
                 }}
               >
-                {/* ใช้ Optional Chaining (?.) เพื่อป้องกัน Error ตรงนี้ */}
                 {userName?.charAt(0).toUpperCase()}
               </div>
             )}
@@ -209,7 +209,7 @@ const AdminSidebar = () => {
               title="ออกจากระบบ"
             >
               <span
-                className="material-symbols-outlined"
+                className="material-symbols-rounded"
                 style={{ fontSize: "18px" }}
               >
                 logout
@@ -224,7 +224,7 @@ const AdminSidebar = () => {
             className="logout-closed-btn mt-2"
             title="ออกจากระบบ"
           >
-            <span className="material-symbols-outlined">logout</span>
+            <span className="material-symbols-rounded">logout</span>
           </button>
         )}
       </div>

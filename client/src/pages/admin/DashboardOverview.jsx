@@ -56,7 +56,7 @@ function DashboardOverview() {
                 <small className="opacity-75">คน</small>
               </div>
               <span
-                className="material-symbols-outlined fs-1 opacity-50"
+                className="material-symbols-rounded fs-1 opacity-50" // Updated
                 style={{ fontSize: "4rem" }}
               >
                 groups
@@ -75,7 +75,7 @@ function DashboardOverview() {
                 <small className="opacity-75">คน</small>
               </div>
               <span
-                className="material-symbols-outlined fs-1 opacity-50"
+                className="material-symbols-rounded fs-1 opacity-50" // Updated
                 style={{ fontSize: "4rem" }}
               >
                 how_to_reg
@@ -98,7 +98,7 @@ function DashboardOverview() {
                 <small className="text-dark opacity-75">คน</small>
               </div>
               <span
-                className="material-symbols-outlined fs-1 text-dark opacity-50"
+                className="material-symbols-rounded fs-1 text-dark opacity-50" // Updated
                 style={{ fontSize: "4rem" }}
               >
                 running_with_errors
@@ -112,7 +112,8 @@ function DashboardOverview() {
       <div className="card shadow-sm border-0 rounded-4">
         <div className="card-header bg-white py-3 border-0">
           <h5 className="m-0 fw-bold text-primary d-flex align-items-center">
-            <span className="material-symbols-outlined me-2">history</span>
+            <span className="material-symbols-rounded me-2">history</span>{" "}
+            {/* Updated */}
             การลงเวลาล่าสุด (Real-time)
           </h5>
         </div>
@@ -213,7 +214,9 @@ function DashboardOverview() {
                 ) : (
                   <tr>
                     <td colSpan="4" className="text-center py-5 text-muted">
-                      <span className="material-symbols-outlined fs-1 d-block mb-2 text-secondary opacity-25">
+                      <span className="material-symbols-rounded fs-1 d-block mb-2 text-secondary opacity-25">
+                        {" "}
+                        {/* Updated */}
                         event_busy
                       </span>
                       ยังไม่มีการลงเวลาวันนี้

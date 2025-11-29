@@ -220,7 +220,7 @@ function ManageTime() {
 
             <button className="edit-day-btn" onClick={() => handleEditDay(day)}>
               <span
-                className="material-symbols-outlined"
+                className="material-symbols-rounded" // Updated
                 style={{ fontSize: "16px" }}
               >
                 edit
@@ -269,7 +269,9 @@ function ManageTime() {
       <div className="calendar-header">
         <div>
           <h2 className="fw-bold m-0 d-flex align-items-center gap-2">
-            <span className="material-symbols-outlined text-primary fs-2">
+            <span className="material-symbols-rounded text-primary fs-2">
+              {" "}
+              {/* Updated */}
               calendar_month
             </span>
             Shift Management
@@ -281,7 +283,7 @@ function ManageTime() {
         <div className="d-flex gap-3 align-items-center flex-wrap">
           <div className="position-relative">
             <span
-              className="material-symbols-outlined position-absolute text-muted"
+              className="material-symbols-rounded position-absolute text-muted" // Updated
               style={{
                 left: "12px",
                 top: "50%",
@@ -301,7 +303,8 @@ function ManageTime() {
           </div>
           <div className="month-navigator">
             <button className="nav-btn" onClick={prevMonth}>
-              <span className="material-symbols-outlined">chevron_left</span>
+              <span className="material-symbols-rounded">chevron_left</span>{" "}
+              {/* Updated */}
             </button>
             <span className="month-title">
               {currentDate.toLocaleDateString("en-US", {
@@ -310,7 +313,8 @@ function ManageTime() {
               })}
             </span>
             <button className="nav-btn" onClick={nextMonth}>
-              <span className="material-symbols-outlined">chevron_right</span>
+              <span className="material-symbols-rounded">chevron_right</span>{" "}
+              {/* Updated */}
             </button>
           </div>
           {/* ปุ่มเพิ่มวันหยุด */}
@@ -318,7 +322,8 @@ function ManageTime() {
             className="btn btn-danger d-flex align-items-center gap-2 rounded-3 px-3 py-2"
             onClick={handleAddHoliday}
           >
-            <span className="material-symbols-outlined">event_busy</span>
+            <span className="material-symbols-rounded">event_busy</span>{" "}
+            {/* Updated */}
             <span className="d-none d-md-inline">เพิ่มวันหยุด</span>
           </button>
         </div>
@@ -359,7 +364,9 @@ function ManageTime() {
       {/* 3. Employee Summary Table (New Section) */}
       <div className="summary-section">
         <div className="section-title">
-          <span className="material-symbols-outlined text-primary">
+          <span className="material-symbols-rounded text-primary">
+            {" "}
+            {/* Updated */}
             summarize
           </span>
           สรุปกะงานประจำเดือน (Employee Schedule Summary)
@@ -426,12 +433,16 @@ function ManageTime() {
                     <td className="text-end">
                       <div className="d-flex justify-content-end gap-2">
                         <button className="btn-icon" title="ดูตารางงาน">
-                          <span className="material-symbols-outlined fs-6">
+                          <span className="material-symbols-rounded fs-6">
+                            {" "}
+                            {/* Updated */}
                             calendar_view_month
                           </span>
                         </button>
                         <button className="btn-icon" title="แก้ไข">
-                          <span className="material-symbols-outlined fs-6">
+                          <span className="material-symbols-rounded fs-6">
+                            {" "}
+                            {/* Updated */}
                             edit
                           </span>
                         </button>

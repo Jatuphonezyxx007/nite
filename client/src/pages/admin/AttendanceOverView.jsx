@@ -218,7 +218,8 @@ function AttendanceOverView() {
         <div className="d-flex flex-wrap align-items-center gap-3">
           {/* Digital Clock */}
           <div className="digital-clock d-none d-md-flex">
-            <span className="material-symbols-outlined">schedule</span>
+            <span className="material-symbols-rounded">schedule</span>{" "}
+            {/* Updated */}
             {currentTime.toLocaleTimeString("th-TH")}
           </div>
 
@@ -233,7 +234,8 @@ function AttendanceOverView() {
           </select>
 
           <button className="btn-modern-primary" onClick={handleExportSummary}>
-            <span className="material-symbols-outlined">description</span>
+            <span className="material-symbols-rounded">description</span>{" "}
+            {/* Updated */}
             สรุปรายงาน (Summary)
           </button>
         </div>
@@ -247,7 +249,8 @@ function AttendanceOverView() {
             <div className="stat-header">
               <span className="stat-title">พนักงานทั้งหมด</span>
               <div className="stat-icon">
-                <span className="material-symbols-outlined">groups</span>
+                <span className="material-symbols-rounded">groups</span>{" "}
+                {/* Updated */}
               </div>
             </div>
             <div className="stat-value">{stats.totalEmployees}</div>
@@ -259,7 +262,8 @@ function AttendanceOverView() {
             <div className="stat-header">
               <span className="stat-title text-success">เข้างานแล้ว</span>
               <div className="stat-icon">
-                <span className="material-symbols-outlined">check_circle</span>
+                <span className="material-symbols-rounded">check_circle</span>{" "}
+                {/* Updated */}
               </div>
             </div>
             <div className="stat-value text-success">{stats.present}</div>
@@ -271,7 +275,9 @@ function AttendanceOverView() {
             <div className="stat-header">
               <span className="stat-title text-warning">สาย (Late)</span>
               <div className="stat-icon">
-                <span className="material-symbols-outlined">
+                <span className="material-symbols-rounded">
+                  {" "}
+                  {/* Updated */}
                   running_with_errors
                 </span>
               </div>
@@ -285,7 +291,8 @@ function AttendanceOverView() {
             <div className="stat-header">
               <span className="stat-title text-danger">ขาด/ลา</span>
               <div className="stat-icon">
-                <span className="material-symbols-outlined">person_off</span>
+                <span className="material-symbols-rounded">person_off</span>{" "}
+                {/* Updated */}
               </div>
             </div>
             <div className="stat-value text-danger">{stats.leave}</div>
@@ -322,13 +329,17 @@ function AttendanceOverView() {
       <div className="table-card">
         <div className="table-header flex-wrap gap-3">
           <h5 className="m-0 fw-bold text-dark d-flex align-items-center">
-            <span className="material-symbols-outlined me-2 text-primary">
+            <span className="material-symbols-rounded me-2 text-primary">
+              {" "}
+              {/* Updated */}
               table_view
             </span>
             รายการลงเวลา (Attendance Logs)
           </h5>
           <div className="search-modern-wrapper">
-            <span className="material-symbols-outlined search-icon">
+            <span className="material-symbols-rounded search-icon">
+              {" "}
+              {/* Updated */}
               search
             </span>
             <input
@@ -439,7 +450,9 @@ function AttendanceOverView() {
                           title="Download Personal Report"
                           onClick={() => handleExportPersonal(log.name)}
                         >
-                          <span className="material-symbols-outlined fs-5">
+                          <span className="material-symbols-rounded fs-5">
+                            {" "}
+                            {/* Updated */}
                             download
                           </span>
                         </button>
@@ -447,7 +460,9 @@ function AttendanceOverView() {
                           className="btn btn-light btn-sm rounded-circle text-muted action-btn"
                           title="View Details"
                         >
-                          <span className="material-symbols-outlined fs-5">
+                          <span className="material-symbols-rounded fs-5">
+                            {" "}
+                            {/* Updated */}
                             visibility
                           </span>
                         </button>

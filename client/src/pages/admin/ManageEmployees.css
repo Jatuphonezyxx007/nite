@@ -322,3 +322,46 @@
   border-bottom: 1px solid #e5e7eb;
   padding-bottom: 8px;
 }
+
+/* ... CSS เดิม ... */
+
+/* --- Pagination Style --- */
+.pagination-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-right: 10px;
+}
+
+.pagination-btn {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  background-color: white;
+  color: var(--text-main);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.pagination-btn:hover:not(:disabled) {
+  background-color: #f3f4f6;
+  border-color: #e5e7eb;
+}
+
+.pagination-btn.active {
+  background-color: var(--primary-color);
+  color: white;
+  box-shadow: 0 2px 5px rgba(30, 42, 69, 0.2);
+}
+
+.pagination-btn:disabled {
+  color: #d1d5db;
+  cursor: not-allowed;
+  background-color: transparent;
+}
