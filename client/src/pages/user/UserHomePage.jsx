@@ -7,6 +7,8 @@ import axios from "axios";
 const Dashboard = () => {
   const [currentTime, setCurrentTime] = useState(new Date());
   const { user } = useContext(AuthContext);
+  const apiUrl = import.meta.env.VITE_API_URL;
+
   // Mock logic คงเดิม
   // 1. ปรับ State ให้รองรับข้อมูลเริ่มต้น (Default values)
   const [stats, setStats] = useState({
