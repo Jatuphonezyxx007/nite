@@ -34,7 +34,7 @@ function Login() {
       if (res.data.user.role === "admin") {
         navigate("/admin");
       } else {
-        navigate("/home");
+        navigate("/user");
       }
     } catch (err) {
       Swal.fire(

@@ -24,6 +24,17 @@ const ProtectedRoute = ({ children, role }) => {
   return children;
 };
 
+const UserLayout = () => {
+  return (
+    <ProtectedRoute>
+      <Navbar />
+      <div className="container mx-auto p-4">
+        <Outlet />
+      </div>
+    </ProtectedRoute>
+  );
+};
+
 function App() {
   return (
     <AuthProvider>
@@ -36,55 +47,35 @@ function App() {
             path="/admin"
             element={
               <ProtectedRoute role="admin">
-                {/* AdminLayout เป็นตัวแม่ คุม Layout ทั้งหมดแล้ว */}
                 <AdminLayout />
               </ProtectedRoute>
             }
           >
-            {/* Redirect index ไป dashboard */}
             <Route index element={<Navigate to="dashboard" replace />} />
-
             <Route path="dashboard" element={<DashboardOverview />} />
             <Route path="users" element={<ManageEmployees />} />
-
-            {/* Group: Attendance (ไม่ต้องใส่ AdminLayout ซ้ำตรงนี้!) */}
             <Route path="attendance">
-              {/* ถ้าเข้า /admin/attendance เฉยๆ ให้เด้งไป overview */}
               <Route index element={<Navigate to="overview" replace />} />
-
-              {/* Route ย่อย: /admin/attendance/overview */}
               <Route path="overview" element={<AttendanceOverView />} />
               <Route path="manage" element={<ManageTime />} />
               <Route path="shifts" element={<ManageShift />} />
-
-              {/* คุณสามารถเพิ่ม Route ย่อยอื่นๆ ตรงนี้ได้ เช่น */}
-              {/* <Route path="manage" element={<AttendanceManage />} /> */}
-              {/* <Route path="shifts" element={<AttendanceShifts />} /> */}
             </Route>
-
             <Route path="settings" element={<Settings />} />
           </Route>
 
           {/* --- User Route --- */}
           <Route
-            path="/home"
+            path="/user"
             element={
-              <ProtectedRoute>
-                <Navbar />
-                <UserHome />
+              <ProtectedRoute role="user">
+                <UserLayout />
               </ProtectedRoute>
             }
-          />
-
-          <Route
-            path="/time-stamp"
-            element={
-              <ProtectedRoute>
-                <Navbar />
-                <UserDashboard />
-              </ProtectedRoute>
-            }
-          />
+          >
+            <Route index element={<Navigate to="home" replace />} />
+            <Route path="home" element={<UserHome />} />
+            <Route path="time-stamp" element={<UserDashboard />} />
+          </Route>
         </Routes>
       </BrowserRouter>
     </AuthProvider>

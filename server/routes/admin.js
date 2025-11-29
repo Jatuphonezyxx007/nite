@@ -225,28 +225,40 @@ router.delete("/users/:id", verifyAdmin, async (req, res) => {
 // 5. Dashboard Stats
 router.get("/stats", verifyAdmin, async (req, res) => {
   try {
-    const today = new Date().toISOString().split("T")[0];
-    const [totalUsers] = await db.query("SELECT COUNT(*) as count FROM users");
-    const [presentToday] = await db.query(
-      "SELECT COUNT(*) as count FROM attendance WHERE date = ?",
-      [today]
+    const today = new Date().toISOString().split("T")[0]; // วันที่ปัจจุบัน YYYY-MM-DD
+
+    // 1. นับพนักงานทั้งหมด (ไม่นับคนที่ถูก Soft Delete)
+    const [totalUsers] = await db.query(
+      "SELECT COUNT(*) as count FROM users WHERE deleted_at IS NULL"
     );
-    const [lateToday] = await db.query(
-      "SELECT COUNT(*) as count FROM attendance WHERE date = ? AND status = 'late'",
+
+    // 2. นับคนที่เข้างานวันนี้ (นับ user_id ที่ไม่ซ้ำกัน เผื่อ scan หลายรอบ)
+    const [presentToday] = await db.query(
+      "SELECT COUNT(DISTINCT user_id) as count FROM attendance WHERE date = ?",
       [today]
     );
 
-    // ดึงรายการคนเข้างานวันนี้ล่าสุด 5 คน (join เพื่อเอาชื่อ)
+    // 3. นับคนที่มาสายวันนี้
+    const [lateToday] = await db.query(
+      "SELECT COUNT(DISTINCT user_id) as count FROM attendance WHERE date = ? AND status = 'late'",
+      [today]
+    );
+
+    // 4. ดึงรายการเข้างานล่าสุดวันนี้ (Join เพื่อเอาชื่อและรูป)
+    // สังเกต: เราเลือก name_th, lastname_th และ profile_image มาแสดง
     const [recent] = await db.query(
       `
-            SELECT a.*, u.name_th, u.lastname_th, u.emp_code, u.nickname_th 
-            FROM attendance a 
-            JOIN users u ON a.user_id = u.id 
-            WHERE a.date = ? 
-            ORDER BY a.clock_in DESC LIMIT 5`,
+      SELECT a.*, u.name_th, u.lastname_th, u.profile_image, u.emp_code
+      FROM attendance a
+      JOIN users u ON a.user_id = u.id
+      WHERE a.date = ?
+      ORDER BY a.clock_in DESC
+      LIMIT 5
+      `,
       [today]
     );
 
+    // ส่งข้อมูลกลับไปให้ Frontend
     res.json({
       totalUsers: totalUsers[0].count,
       present: presentToday[0].count,
@@ -254,6 +266,66 @@ router.get("/stats", verifyAdmin, async (req, res) => {
       recentActivity: recent,
     });
   } catch (err) {
+    console.error("Dashboard Stats Error:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// 5. ดึงข้อมูลภาพรวมการเข้างาน (Overview Page)
+router.get("/attendance-overview", verifyAdmin, async (req, res) => {
+  try {
+    const today = new Date().toISOString().split("T")[0];
+
+    // 1. Daily Stats (วันนี้)
+    const [totalUsersRes] = await db.query(
+      "SELECT COUNT(*) as count FROM users WHERE deleted_at IS NULL"
+    );
+    const [attendanceRes] = await db.query(
+      "SELECT status, COUNT(*) as count FROM attendance WHERE date = ? GROUP BY status",
+      [today]
+    );
+
+    const totalEmployees = totalUsersRes[0].count;
+    let present = 0;
+    let late = 0;
+    let onTime = 0;
+
+    attendanceRes.forEach((row) => {
+      if (row.status === "late") late = row.count;
+      if (row.status === "on_time") onTime = row.count;
+    });
+    present = late + onTime;
+    const absent = totalEmployees - present;
+
+    // 2. Weekly Stats (ย้อนหลัง 7 วัน)
+    // Query นี้จะดึงวันที่และจำนวนคนเข้างานย้อนหลัง 7 วัน
+    const [weeklyRes] = await db.query(`
+      SELECT DATE(date) as date, COUNT(*) as count 
+      FROM attendance 
+      WHERE date >= DATE_SUB(CURDATE(), INTERVAL 6 DAY) 
+      GROUP BY date 
+      ORDER BY date ASC
+    `);
+
+    // 3. Today Logs (รายการเข้างานวันนี้)
+    const [logs] = await db.query(
+      `
+      SELECT a.*, u.name_th, u.lastname_th, u.emp_code, u.position, u.profile_image 
+      FROM attendance a 
+      JOIN users u ON a.user_id = u.id 
+      WHERE a.date = ? 
+      ORDER BY a.clock_in DESC
+    `,
+      [today]
+    );
+
+    res.json({
+      stats: { totalEmployees, present, late, onTime, absent },
+      weeklyStats: weeklyRes,
+      logs: logs,
+    });
+  } catch (err) {
+    console.error("Attendance Overview Error:", err);
     res.status(500).json({ error: err.message });
   }
 });
