@@ -1,218 +1,181 @@
-/* Navbar.css */
-@import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap");
-
+/* Navbar.css - Modern Clean Style */
 :root {
-  --nav-height: 80px;
-  --primary-glow: radial-gradient(
-    circle at center,
-    rgba(99, 102, 241, 0.15) 0%,
-    transparent 70%
-  );
-  --accent-gradient: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
-  --glass-bg: rgba(255, 255, 255, 0.8);
-  --glass-border: 1px solid rgba(255, 255, 255, 0.5);
-  --text-primary: #0f172a;
-  --text-secondary: #64748b;
+  --primary: #4f46e5;
+  --primary-soft: #e0e7ff;
+  --text-main: #1e293b;
+  --text-sec: #64748b;
+  --bg-glass: rgba(255, 255, 255, 0.9);
 }
 
-body {
-  font-family: "Plus Jakarta Sans", sans-serif; /* แนะนำฟอนต์นี้ถ้าอยากให้ดู Inter */
-}
-
-/* --- 1. The Navbar Layout --- */
-.premium-navbar {
-  height: var(--nav-height);
-  padding: 0;
-  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-  background: transparent; /* เริ่มต้นแบบใส */
+.modern-navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 72px;
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(12px);
+  z-index: 1000;
+  transition: all 0.3s ease;
   border-bottom: 1px solid transparent;
 }
 
-/* สถานะเมื่อ Scrolled (Javascript จะเติม class นี้) */
-.premium-navbar.scrolled {
-  background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border-bottom: 1px solid rgba(226, 232, 240, 0.6);
-  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.03);
-  height: 70px; /* ย่อขนาดลงนิดนึงให้ดู compact */
+.modern-navbar.scrolled {
+  background: rgba(255, 255, 255, 0.98);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  border-bottom: 1px solid #f1f5f9;
 }
 
-/* --- 2. Logo Animation --- */
-.brand-wrapper {
-  position: relative;
+.nav-container {
   display: flex;
   align-items: center;
-  gap: 12px;
-  text-decoration: none;
+  justify-content: space-between;
+  height: 100%;
+  padding: 0 1.5rem;
 }
 
-.brand-logo-bg {
-  width: 42px;
-  height: 42px;
-  background: var(--accent-gradient);
-  border-radius: 12px;
+/* Brand */
+.nav-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  color: var(--text-main);
+}
+
+.brand-logo {
+  width: 36px;
+  height: 36px;
+  background: var(--primary);
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
-  font-size: 1.2rem;
-  box-shadow: 0 8px 16px rgba(59, 130, 246, 0.25);
-  transition: transform 0.3s ease;
-}
-
-.brand-wrapper:hover .brand-logo-bg {
-  transform: scale(1.05) rotate(-3deg);
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
 }
 
 .brand-text {
   font-size: 1.25rem;
-  font-weight: 800;
-  background: linear-gradient(to right, #1e293b, #3b82f6);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  font-weight: 700;
   letter-spacing: -0.5px;
 }
 
-/* --- 3. Navigation Links (The Glow Effect) --- */
-.nav-link-modern {
-  position: relative;
-  font-weight: 600;
-  color: var(--text-secondary) !important;
-  padding: 0.6rem 1rem !important;
-  margin: 0 4px;
-  border-radius: 8px;
-  transition: all 0.3s ease;
-  overflow: hidden;
+/* Content Wrapper */
+.nav-content-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+}
+
+/* Menu Links */
+.nav-menu {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.nav-link-item {
   display: flex;
   align-items: center;
   gap: 8px;
-}
-
-/* พื้นหลังเรืองแสงเวลา Hover (ซ่อนไว้ก่อน) */
-.nav-link-modern::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: rgba(59, 130, 246, 0.08);
-  transform: scale(0.8);
-  opacity: 0;
-  border-radius: 8px;
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-  z-index: -1;
-}
-
-.nav-link-modern:hover {
-  color: #3b82f6 !important;
-  transform: translateY(-1px);
-}
-
-.nav-link-modern:hover::before {
-  transform: scale(1);
-  opacity: 1;
-}
-
-.nav-link-modern.active {
-  color: #2563eb !important;
-  background: rgba(37, 99, 235, 0.08);
-}
-
-.nav-link-modern.active::after {
-  content: "";
-  position: absolute;
-  bottom: -2px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 20px;
-  height: 3px;
-  background: #2563eb;
-  border-radius: 10px;
-}
-
-/* --- 4. User Profile (Minimalist) --- */
-.profile-trigger {
-  padding: 6px;
-  padding-right: 16px;
+  padding: 0.6rem 1rem;
   border-radius: 50px;
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  background: white;
-  transition: all 0.3s ease;
-  cursor: pointer;
+  text-decoration: none;
+  color: var(--text-sec);
+  font-weight: 500;
+  font-size: 0.95rem;
+  transition: all 0.2s ease;
+}
+
+.nav-link-item:hover {
+  background: #f8fafc;
+  color: var(--primary);
+}
+
+.nav-link-item.active {
+  background: var(--primary);
+  color: white;
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.25);
+}
+
+.nav-link-item .icon {
+  font-size: 1.25rem;
+}
+
+/* Profile Section */
+.nav-profile-section {
+  position: relative;
+  padding-left: 1rem;
+  border-left: 1px solid #e2e8f0;
+}
+
+.profile-btn {
   display: flex;
   align-items: center;
   gap: 10px;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 50px;
+  transition: background 0.2s;
 }
 
-.profile-trigger:hover {
-  border-color: #bfdbfe;
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+.profile-btn:hover {
+  background: #f1f5f9;
 }
 
-.avatar-circle {
-  width: 36px;
-  height: 36px;
+.avatar-img {
+  width: 38px;
+  height: 38px;
   border-radius: 50%;
   object-fit: cover;
   border: 2px solid white;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-.profile-info {
+.profile-meta {
   display: flex;
   flex-direction: column;
-  line-height: 1.2;
-}
-.profile-name {
-  font-size: 0.85rem;
-  font-weight: 700;
-  color: #1e293b;
-}
-.profile-role {
-  font-size: 0.7rem;
-  color: #94a3b8;
-  font-weight: 500;
+  line-height: 1.1;
 }
 
-/* --- 5. Dropdown Animation (Float Up) --- */
-.animate-dropdown {
-  border: none;
+.profile-meta .name {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.profile-meta .role {
+  font-size: 0.75rem;
+  color: var(--text-sec);
+}
+
+.arrow {
+  color: var(--text-sec);
+  transition: transform 0.3s;
+}
+
+.arrow.rotate {
+  transform: rotate(180deg);
+}
+
+/* Dropdown */
+.modern-dropdown {
+  position: absolute;
+  top: 120%;
+  right: 0;
+  width: 260px;
+  background: white;
   border-radius: 16px;
-  box-shadow: 0 20px 40px -5px rgba(0, 0, 0, 0.1),
-    0 10px 20px -5px rgba(0, 0, 0, 0.04);
-  padding: 8px;
-  margin-top: 12px !important;
-  min-width: 240px;
-  animation: slideUpFade 0.3s ease forwards;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.12);
+  padding: 0.5rem;
+  border: 1px solid #f1f5f9;
+  animation: slideDown 0.2s ease-out;
 }
 
-.dropdown-item-modern {
-  padding: 10px 16px;
-  border-radius: 10px;
-  font-weight: 500;
-  color: var(--text-secondary);
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  transition: all 0.2s;
-}
-
-.dropdown-item-modern:hover {
-  background: #f1f5f9;
-  color: #3b82f6;
-  transform: translateX(2px);
-}
-
-.dropdown-item-modern.logout-btn {
-  color: #ef4444;
-}
-.dropdown-item-modern.logout-btn:hover {
-  background: #fef2f2;
-}
-
-@keyframes slideUpFade {
+@keyframes slideDown {
   from {
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateY(-10px);
   }
   to {
     opacity: 1;
@@ -220,32 +183,255 @@ body {
   }
 }
 
-/* Mobile Toggler */
-.navbar-toggler {
-  border: none;
-  outline: none;
-  box-shadow: none !important;
-}
-.hamburger-line {
-  display: block;
-  width: 24px;
-  height: 2px;
-  background: #333;
-  margin: 5px 0;
-  transition: 0.3s;
+.dropdown-info {
+  padding: 1rem;
+  background: #f8fafc;
+  border-radius: 12px;
+  margin-bottom: 0.5rem;
 }
 
-/* Responsive Fixes */
-@media (max-width: 991px) {
-  .premium-navbar {
-    background: white;
-    height: auto;
-    padding: 10px 0;
+.dropdown-info .name {
+  font-weight: 700;
+  color: var(--text-main);
+  font-size: 1rem;
+  margin: 0;
+}
+
+.dropdown-info .id-badge {
+  font-size: 0.75rem;
+  color: var(--text-sec);
+  margin: 0;
+}
+
+.dd-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0.75rem 1rem;
+  text-decoration: none;
+  color: var(--text-sec);
+  font-size: 0.9rem;
+  font-weight: 500;
+  border-radius: 8px;
+  transition: all 0.2s;
+  background: none;
+  border: none;
+  width: 100%;
+  text-align: left;
+}
+
+.dd-link:hover {
+  background: #f1f5f9;
+  color: var(--primary);
+}
+
+.dd-link.logout {
+  color: #ef4444;
+}
+
+.dd-link.logout:hover {
+  background: #fef2f2;
+}
+
+.divider {
+  height: 1px;
+  background: #e2e8f0;
+  margin: 0.5rem 0;
+}
+
+/* Mobile Responsive */
+.nav-toggle-btn {
+  display: none;
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: var(--text-main);
+  cursor: pointer;
+}
+
+@media (max-width: 992px) {
+  .nav-toggle-btn {
+    display: block;
   }
-  .navbar-collapse {
+
+  .nav-content-wrapper {
+    position: fixed;
+    top: 72px;
+    left: 0;
+    width: 100%;
     background: white;
-    padding: 20px;
-    border-radius: 0 0 20px 20px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+    flex-direction: column;
+    padding: 2rem;
+    gap: 1.5rem;
+    border-bottom: 1px solid #e2e8f0;
+    transform: translateY(-150%);
+    transition: transform 0.3s ease;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
+  }
+
+  .nav-content-wrapper.open {
+    transform: translateY(0);
+  }
+
+  .nav-menu {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .nav-link-item {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .nav-profile-section {
+    width: 100%;
+    padding-left: 0;
+    border-left: none;
+    border-top: 1px solid #e2e8f0;
+    padding-top: 1.5rem;
+  }
+}
+
+/* Navbar.css */
+
+/* ..code อื่นๆ.. */
+
+.profile-meta {
+  line-height: 1; /* ลดช่องว่างบรรทัด */
+}
+
+.profile-meta .name {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text-main);
+  margin-bottom: 2px; /* ดัน Pill ลงนิดนึง */
+}
+
+/* สร้าง Pill ให้สวยๆ ตรงนี้ครับ */
+.profile-meta .role {
+  font-size: 0.65rem; /* ตัวอักษรเล็กกำลังดี */
+  font-weight: 600;
+  color: var(--primary); /* สีตัวอักษร (indigo) */
+  background: var(--primary-soft); /* สีพื้นหลัง (indigo อ่อนๆ) */
+  padding: 3px 8px; /* ระยะห่างภายใน Pill */
+  border-radius: 20px; /* ทำขอบมนเป็นแคปซูล */
+  letter-spacing: 0.3px; /* ระยะห่างตัวอักษร */
+  text-transform: capitalize; /* ตัวแรกตัวใหญ่ */
+  display: inline-block; /* ให้แสดงผลเป็นก้อน */
+  white-space: nowrap;
+
+  /* เพิ่ม Animation เล็กน้อยตอนเมาส์ชี้ */
+  transition: all 0.2s ease;
+}
+
+/* ถ้าอยากให้ Pill เปลี่ยนสีตอนเมาส์ชี้ที่โปรไฟล์ */
+.profile-trigger:hover .role {
+  background: var(--primary);
+  color: white;
+}
+
+/* Navbar.css */
+
+/* เพิ่มต่อท้าย */
+/* Navbar.css */
+
+.nav-clock {
+  display: flex;
+  align-items: center;
+  gap: 10px; /* ระยะห่างระหว่างไอคอนกับข้อความ */
+  background: #f8fafc;
+  padding: 4px 16px 4px 12px; /* ปรับ padding ให้สมดุล */
+  border-radius: 12px; /* ลดความมนลงนิดหน่อยให้เข้ากับทรงสี่เหลี่ยมผืนผ้า */
+  border: 1px solid #e2e8f0;
+  margin-right: 1rem;
+  height: 48px; /* กำหนดความสูงให้เท่ากับ Profile Pill */
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.02);
+}
+
+.clock-icon-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: white;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.nav-clock .icon {
+  font-size: 1.2rem;
+  color: var(--primary);
+}
+
+.clock-info {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  line-height: 1.1; /* บีบบรรทัดให้ชิดกัน */
+}
+
+.nav-clock .time-text {
+  font-family: "JetBrains Mono", "Courier New", monospace;
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--text-main);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.5px;
+}
+
+.nav-clock .date-text {
+  font-family: "JetBrains Mono", monospace; /* ใช้ฟอนต์เดียวกับเวลา */
+  font-size: 0.7rem;
+  color: var(--text-sec); /* สีเทาจางกว่าเวลา */
+  font-weight: 500;
+  letter-spacing: 0px;
+  text-transform: uppercase; /* ตัวอักษรวัน (Sun) เป็นตัวพิมพ์ใหญ่เสมอ (Optional) */
+}
+
+/* Navbar.css */
+
+/* ... styles เดิมของ .nav-clock ... */
+
+/* เพิ่มต่อท้ายไฟล์ */
+
+/* ปรับแต่งสำหรับ Mobile Mode */
+.nav-clock.mobile-mode {
+  display: flex; /* แสดงผล */
+  margin-right: 0; /* ลบ margin ขวาเพราะเราใช้ gap ของ container แทน */
+  padding: 4px 10px; /* ลด padding ลงเล็กน้อย */
+  height: 40px; /* ลดความสูง */
+  background: rgba(248, 250, 252, 0.8); /* พื้นหลังจางลงนิดนึง */
+  backdrop-filter: blur(4px);
+}
+
+/* ย่อขนาดไอคอนบนมือถือ */
+.nav-clock.mobile-mode .clock-icon-wrapper {
+  width: 26px;
+  height: 26px;
+}
+
+.nav-clock.mobile-mode .clock-icon-wrapper .icon {
+  font-size: 1rem;
+}
+
+/* ย่อขนาดตัวหนังสือบนมือถือ */
+.nav-clock.mobile-mode .time-text {
+  font-size: 0.8rem;
+}
+
+.nav-clock.mobile-mode .date-text {
+  font-size: 0.6rem;
+}
+
+/* Responsive adjustment for VERY small screens (iPhone SE, Fold) */
+@media (max-width: 380px) {
+  /* ซ่อนวันที่ถ้าจอมือถือเล็กมากจริงๆ ให้เหลือแค่เวลา */
+  .nav-clock.mobile-mode .date-text {
+    display: none;
+  }
+
+  .nav-clock.mobile-mode .clock-info {
+    justify-content: center;
   }
 }

@@ -82,3 +82,13 @@ a:hover {
     transform: translateX(0);
   }
 }
+
+/* ใส่ใน index.css หรือ App.css */
+
+a {
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: none !important;
+}
