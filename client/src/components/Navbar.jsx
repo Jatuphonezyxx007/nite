@@ -20,7 +20,7 @@ function Navbar() {
     { name: "หน้าหลัก", path: "/user/home", icon: "home" },
     { name: "ลงเวลา", path: "/user/attendance", icon: "schedule" },
     { name: "ตารางงาน", path: "/user/schedule", icon: "calendar_month" },
-    { name: "วันหยุด", path: "/user/holidays", icon: "wb_sunny" },
+    { name: "การลา", path: "/user/leave", icon: "edit_document" },
   ];
 
   useEffect(() => {

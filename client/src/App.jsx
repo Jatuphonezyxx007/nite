@@ -8,9 +8,14 @@ import {
 } from "react-router-dom";
 import { AuthProvider, AuthContext } from "./context/AuthContext";
 import { useContext } from "react";
+import axios from "axios";
 import Login from "./pages/Login";
+
 import UserDashboard from "./pages/user/UserDashboard";
 import UserHome from "./pages/user/UserHomePage";
+import Attendance from "./pages/user/Attendance";
+import Schedule from "./pages/user/Schedule";
+import Leave from "./pages/user/Leave";
 
 import Navbar from "./components/Navbar";
 
@@ -23,6 +28,7 @@ import AttendanceOverView from "./pages/admin/AttendanceOverView";
 import ManageTime from "./pages/admin/ManageTime";
 import ManageShift from "./pages/admin/ManageShifts";
 
+axios.defaults.withCredentials = true;
 const ProtectedRoute = ({ children, role }) => {
   const { user } = useContext(AuthContext);
   if (!user) return <Navigate to="/" />;
@@ -80,6 +86,9 @@ function App() {
           >
             <Route index element={<Navigate to="home" replace />} />
             <Route path="home" element={<UserHome />} />
+            <Route path="attendance" element={<Attendance />} />
+            <Route path="schedule" element={<Schedule />} />
+            <Route path="leave" element={<Leave />} />
             <Route path="time-stamp" element={<UserDashboard />} />
           </Route>
         </Routes>

@@ -6,9 +6,9 @@ import Swal from "sweetalert2";
 import niteLogo from "../assets/nite-logo.svg";
 
 function Login() {
-  // 1. เปลี่ยน State จาก email เป็น empCode
-  const [empCode, setEmpCode] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+
   const { login } = useContext(AuthContext);
   const navigate = useNavigate();
   const apiUrl = import.meta.env.VITE_API_URL;
@@ -16,31 +16,42 @@ function Login() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      // 2. เปลี่ยน payload ที่ส่งไปหลังบ้านเป็น emp_code
+      // 1. ยิง API Login (ไม่ต้องมี withCredentials เพราะไม่ได้ใช้ Cookie)
       const res = await axios.post(`${apiUrl}/api/auth/login`, {
-        emp_code: empCode,
+        username,
         password,
       });
-      login(res.data.token);
+
+      // 2. รับ Token และ User Data จาก JSON Response
+      const { token, user } = res.data;
+
+      // 3. เรียกฟังก์ชัน login ใน Context เพื่อเก็บ Token
+      login(token);
+
+      // 4. แสดง Alert ต้อนรับ
+      const displayName = user.name_th
+        ? `${user.name_th} ${user.lastname_th}`
+        : user.username;
 
       Swal.fire({
         icon: "success",
-        title: "Welcome Back!",
-        text: `สวัสดีคุณ ${res.data.user.name_th} ${res.data.user.lastname_th}`,
-        timer: 3000,
+        title: "Login Success!",
+        text: `ยินดีต้อนรับคุณ ${displayName}`,
+        timer: 1500,
         showConfirmButton: false,
       });
 
-      if (res.data.user.role === "admin") {
+      // 5. Redirect ไปตาม Role
+      if (user.role === "admin") {
         navigate("/admin");
       } else {
         navigate("/user");
       }
     } catch (err) {
+      console.error(err);
       Swal.fire(
         "Login Failed",
-        // ปรับข้อความ Error ให้สอดคล้อง
-        err.response?.data?.message || "รหัสพนักงานหรือรหัสผ่านไม่ถูกต้อง",
+        err.response?.data?.message || "ชื่อผู้ใช้งานหรือรหัสผ่านไม่ถูกต้อง",
         "error"
       );
     }
@@ -64,25 +75,23 @@ function Login() {
                   </div>
                   <h4 className="fw-bold text-dark">ยินดีต้อนรับ</h4>
                   <p className="text-muted small">
-                    กรุณาระบุรหัสพนักงานเพื่อเข้าสู่ระบบ
+                    กรุณาระบุชื่อผู้ใช้งานเพื่อเข้าสู่ระบบ
                   </p>
                 </div>
 
                 <form onSubmit={handleSubmit}>
-                  {/* 3. แก้ไข Input Field */}
                   <div className="form-floating mb-3">
                     <input
-                      type="text" // เปลี่ยนเป็น text เพราะรหัสพนักงานอาจไม่ใช่ format email
+                      type="text"
                       className="form-control rounded-3 bg-light border-0"
                       id="floatingInput"
-                      placeholder="รหัสพนักงาน"
-                      value={empCode}
-                      onChange={(e) => setEmpCode(e.target.value)}
+                      placeholder="Username"
+                      value={username}
+                      onChange={(e) => setUsername(e.target.value)}
                       required
                     />
                     <label htmlFor="floatingInput" className="text-muted">
-                      {/* เปลี่ยน Icon และ Label */}
-                      <i className="bi bi-person-badge me-2"></i>รหัสพนักงาน
+                      <i className="bi bi-person-fill me-2"></i>ชื่อผู้ใช้งาน
                     </label>
                   </div>
 

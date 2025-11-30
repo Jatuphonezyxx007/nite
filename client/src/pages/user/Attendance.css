@@ -1,0 +1,206 @@
+/* Attendance.css */
+
+/* Layout & Spacing */
+.attendance-page {
+  /* เว้นระยะด้านบนเผื่อให้ Navbar ไม่ทับเนื้อหา */
+  padding-top: 100px;
+  padding-bottom: 40px;
+  /* background-color: #f8f9fa; */
+  min-height: 100vh;
+  font-family: "Kanit", sans-serif;
+}
+
+.attendance-container {
+  max-width: 1200px;
+}
+
+/* Digital Clock */
+.digital-clock-large {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 3.5rem;
+  font-weight: 700;
+  color: #1e2a45;
+  line-height: 1;
+  letter-spacing: -2px;
+}
+
+.date-display {
+  font-size: 1.1rem;
+  font-weight: 500;
+}
+
+/* Alert Card (Mockup Logic) */
+.alert-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px;
+  border-radius: 16px;
+  border: 1px solid transparent;
+}
+
+.alert-card.success {
+  background-color: #ecfdf5;
+  border-color: #d1fae5;
+  color: #065f46;
+}
+
+.alert-card.warning {
+  background-color: #fffbeb;
+  border-color: #fde68a;
+  color: #92400e;
+}
+
+.alert-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(255, 255, 255, 0.6);
+}
+
+.alert-card.success .alert-icon {
+  color: #10b981;
+}
+.alert-card.warning .alert-icon {
+  color: #f59e0b;
+}
+
+.alert-icon span {
+  font-size: 28px;
+}
+
+.alert-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.alert-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  opacity: 0.8;
+}
+
+.alert-value {
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.alert-desc {
+  font-size: 0.85rem;
+  margin-top: 2px;
+}
+
+/* Camera Section */
+.camera-viewport {
+  width: 100%;
+  height: 450px; /* ความสูง Fixed เพื่อความสวยงาม */
+  position: relative;
+  background-color: #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.camera-feed,
+.captured-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover; /* ให้ภาพเต็มพื้นที่ */
+  transform: scaleX(-1); /* กลับด้านภาพเหมือนกระจกเงา */
+}
+
+/* Face Guide Overlay (กรอบเล็งหน้า) */
+.face-guide-overlay {
+  position: absolute;
+  width: 280px;
+  height: 350px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 180px; /* ทรงวงรีหน้าคน */
+  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.5); /* ทำพื้นหลังมืดรอบๆ กรอบ */
+  pointer-events: none;
+}
+
+.scan-line {
+  width: 100%;
+  height: 2px;
+  background: #00f2fe;
+  position: absolute;
+  top: 0;
+  animation: scan 3s infinite linear;
+  box-shadow: 0 0 10px #00f2fe;
+}
+
+@keyframes scan {
+  0% {
+    top: 0%;
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    top: 100%;
+    opacity: 0;
+  }
+}
+
+/* Capture Button */
+.btn-capture {
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  border: 4px solid #e2e8f0;
+  background-color: #fff;
+  color: #1e2a45;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.btn-capture:hover {
+  transform: scale(1.1);
+  border-color: #1e2a45;
+  color: #fff;
+  background-color: #1e2a45;
+}
+
+.btn-capture span {
+  font-size: 32px;
+}
+
+.instruction-box {
+  background-color: #f8fafc;
+  padding: 16px;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+}
+
+/* Responsive */
+@media (max-width: 992px) {
+  .attendance-page {
+    padding-top: 80px;
+  }
+
+  .camera-viewport {
+    height: 350px; /* ลดความสูงบนมือถือ */
+  }
+
+  .face-guide-overlay {
+    width: 200px;
+    height: 260px;
+  }
+
+  .digital-clock-large {
+    font-size: 2.5rem;
+  }
+}

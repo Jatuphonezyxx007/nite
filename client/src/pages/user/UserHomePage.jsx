@@ -321,7 +321,7 @@ const Dashboard = () => {
                     {
                       name: "Leave Request",
                       icon: "beach_access",
-                      link: "/user/holidays",
+                      link: "/user/leave",
                     },
                     { name: "Report", icon: "description", link: "/report" },
                     { name: "Profile", icon: "person", link: "/profile" },

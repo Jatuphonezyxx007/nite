@@ -3,12 +3,19 @@
 require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
+const cookieParser = require("cookie-parser");
 const app = express();
 const PORT = process.env.PORT || 3000;
 const path = require("path");
 
-app.use(cors());
+app.use(
+  cors({
+    origin: "http://localhost:5173", // ระบุ URL ของ Frontend ให้ชัดเจน (ห้ามใช้ *)
+    credentials: true, // อนุญาตให้ส่ง Cookie
+  })
+);
 app.use(express.json({ limit: "50mb" }));
+app.use(cookieParser());
 
 // --- 1. Import Routes ---
 const authRoutes = require("./routes/auth");
