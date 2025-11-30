@@ -2,9 +2,15 @@
 const jwt = require("jsonwebtoken");
 
 const verifyToken = (req, res, next) => {
-  // อ่าน Token จาก Cookie แทน Header
-  const token = req.cookies.token;
+  // ❌ ลบอันเก่าออก: const token = req.cookies.token;
 
+  // ✅ 1. อ่าน Token จาก Header (Format: "Bearer <token>")
+  const authHeader = req.headers["authorization"];
+
+  // ถ้ามี Header ให้ตัดคำว่า "Bearer " ออกเพื่อเอาเฉพาะตัว Token
+  const token = authHeader && authHeader.split(" ")[1];
+
+  // 2. ถ้าไม่มี Token ส่งมา
   if (!token) {
     return res
       .status(403)
@@ -12,6 +18,7 @@ const verifyToken = (req, res, next) => {
   }
 
   try {
+    // 3. ตรวจสอบความถูกต้อง
     const decoded = jwt.verify(token, process.env.JWT_SECRET || "secretkey");
     req.user = decoded;
     next();

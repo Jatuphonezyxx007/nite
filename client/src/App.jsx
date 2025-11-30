@@ -28,11 +28,26 @@ import AttendanceOverView from "./pages/admin/AttendanceOverView";
 import ManageTime from "./pages/admin/ManageTime";
 import ManageShift from "./pages/admin/ManageShifts";
 
-axios.defaults.withCredentials = true;
+const token = localStorage.getItem("token");
+if (token) {
+  axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+}
+
 const ProtectedRoute = ({ children, role }) => {
-  const { user } = useContext(AuthContext);
-  if (!user) return <Navigate to="/" />;
-  if (role && user.role !== role) return <Navigate to="/" />;
+  const { user, loading } = useContext(AuthContext);
+
+  if (loading) {
+    return null; // หรือใส่ <div className="p-4">Loading...</div>
+  }
+
+  if (!user) {
+    return <Navigate to="/" replace />;
+  }
+
+  if (role && user.role !== role) {
+    return <Navigate to="/" replace />;
+  }
+
   return children;
 };
 
