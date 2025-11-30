@@ -22,6 +22,7 @@ const authRoutes = require("./routes/auth");
 const adminRoutes = require("./routes/admin");
 const attendanceRoutes = require("./routes/attendance");
 const userRoutes = require("./routes/users"); // <--- ✅ เพิ่มบรรทัดนี้
+const leaveRoutes = require("./routes/leaves");
 
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
@@ -30,6 +31,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/attendance", attendanceRoutes);
 app.use("/api/user", userRoutes); // <--- ✅ เพิ่มบรรทัดนี้ (สำคัญมาก)
+app.use("/api/leaves", leaveRoutes);
 
 // หมายเหตุ:
 // Frontend เรียก: /api/user/dashboard-stats
