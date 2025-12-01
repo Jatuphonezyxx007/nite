@@ -6,8 +6,13 @@
   --bg-color: #f8f9fc;
   --card-hover: #f1f3f9;
 
-  --weekend-color: #e74a3b; /* สีแดงสำหรับวันเสาร์-อาทิตย์ */
+  --weekend-color: #e74a3b;
   --weekend-bg: #fff5f5;
+
+  /* Holiday Colors */
+  --holiday-bg: #ffebeb;
+  --holiday-border: #feb2b2;
+  --holiday-text: #c53030;
 
   /* Status Colors */
   --status-present-bg: #d1fae5;
@@ -79,10 +84,8 @@ body {
   font-size: 0.9rem;
 }
 
-/* วันเสาร์-อาทิตย์ สีแดง */
-.weekday-header:nth-child(1), /* Sunday */
+.weekday-header:nth-child(1),
 .weekday-header:nth-child(7) {
-  /* Saturday */
   color: var(--weekend-color);
 }
 
@@ -99,6 +102,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: 4px;
+  overflow: hidden; /* ป้องกันเนื้อหาล้น */
 }
 
 .calendar-day:hover {
@@ -115,9 +119,8 @@ body {
   cursor: default;
 }
 
-/* Selected State */
 .calendar-day.selected {
-  border: 2px solid var(--primary-color);
+  border: 2px solid var(--primary-color) !important;
   background-color: rgba(78, 115, 223, 0.05);
 }
 
@@ -132,57 +135,74 @@ body {
   justify-content: center;
   border-radius: 50%;
   font-size: 0.9rem;
+  flex-shrink: 0; /* ป้องกันวงกลมเบี้ยว */
 }
 
-/* Today Style */
 .calendar-day.today .day-number {
   color: white;
   background: var(--primary-color);
 }
 
-/* Weekend Style */
 .calendar-day.weekend {
   background-color: var(--weekend-bg);
 }
 .calendar-day.weekend .day-number {
   color: var(--weekend-color);
 }
-/* Weekend + Today */
 .calendar-day.weekend.today .day-number {
   background: var(--weekend-color);
   color: white;
 }
 
-/* --- Shift Items inside Calendar --- */
+/* --- Holiday Style (Truncate Added) --- */
+.calendar-day.holiday {
+  background-color: var(--holiday-bg);
+  border-color: var(--holiday-border);
+}
+
+.calendar-day.holiday .day-number {
+  color: var(--holiday-text);
+  font-weight: 700;
+}
+
+.holiday-label {
+  font-size: 0.7rem;
+  color: var(--holiday-text);
+  background: rgba(255, 255, 255, 0.7);
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-bottom: 4px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+
+  /* Truncate Logic */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%; /* บังคับไม่ให้เกินความกว้างกล่อง */
+}
+
+/* --- Shift Items inside Calendar (Truncate Added) --- */
 .shift-item {
   font-size: 0.7rem;
   padding: 3px 6px;
   border-radius: 4px;
+
+  /* Truncate Logic */
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  max-width: 100%; /* บังคับไม่ให้เกินความกว้างกล่อง */
+
   display: flex;
   align-items: center;
   gap: 4px;
-  background-color: #f8f9fa; /* Default bg */
+  background-color: #f8f9fa;
   color: #333;
 }
 
-/* Shift Colors based on Shift Type (Optional) */
-.shift-item.shift-morning {
-  background-color: #e3f2fd;
-  color: #1565c0;
-}
-.shift-item.shift-afternoon {
-  background-color: #fff3e0;
-  color: #ef6c00;
-}
-.shift-item.shift-night {
-  background-color: #f3e5f5;
-  color: #7b1fa2;
-}
-
-/* Status Dots in Calendar */
 .status-dot-mini {
   width: 6px;
   height: 6px;
@@ -260,9 +280,9 @@ body {
   font-weight: bold;
   color: #5a5c69;
   font-size: 1.1rem;
+  flex-shrink: 0;
 }
 
-/* Status Badges in Detail */
 .status-badge-lg {
   font-size: 0.7rem;
   padding: 4px 10px;
@@ -273,7 +293,6 @@ body {
   gap: 4px;
 }
 
-/* Status Variants Implementation */
 .status-present {
   background-color: var(--status-present-bg);
   color: var(--status-present-text);
@@ -295,7 +314,6 @@ body {
   color: var(--status-pending-text);
 }
 
-/* Attendance Time Info */
 .attendance-info {
   margin-top: 10px;
   padding-top: 10px;
@@ -317,14 +335,26 @@ body {
   border: 1px solid #f1f5f9;
 }
 
-/* Mobile Responsive */
+.holiday-banner {
+  background-color: var(--holiday-bg);
+  color: var(--holiday-text);
+  padding: 16px;
+  border-radius: 16px;
+  text-align: center;
+  margin-bottom: 20px;
+  border: 1px dashed var(--holiday-border);
+}
+
 @media (max-width: 768px) {
   .calendar-day {
     min-height: 70px;
     padding: 4px;
   }
   .shift-item span:not(.status-dot-mini) {
-    display: none; /* Hide text on mobile */
+    display: none;
+  }
+  .holiday-label span {
+    display: none;
   }
   .shift-item {
     justify-content: center;

@@ -1,115 +1,37 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "./Schedule.css";
-
-// --- Helper: สร้างวันที่แบบ Dynamic ---
-const getDateString = (offsetDays) => {
-  const d = new Date();
-  d.setDate(d.getDate() + offsetDays);
-  return d.toISOString().split("T")[0]; // Returns YYYY-MM-DD
-};
-
-// --- MOCK DATA: สร้างข้อมูลจำลองตามวันจริง ---
-const mockSchedules = [
-  // 1. อดีต: มาปกติ (3 วันที่แล้ว)
-  {
-    id: 101,
-    date: getDateString(-3),
-    empName: "จตุ (Jatu)",
-    role: "Frontend",
-    shift: "morning",
-    time: "08:00 - 17:00",
-    status: "present",
-    checkIn: "07:55",
-    checkOut: "17:05",
-  },
-  // 2. อดีต: มาสาย (2 วันที่แล้ว)
-  {
-    id: 102,
-    date: getDateString(-2),
-    empName: "สมชาย",
-    role: "Backend",
-    shift: "night",
-    time: "22:00 - 06:00",
-    status: "late",
-    checkIn: "22:15",
-    checkOut: "06:00",
-  },
-  // 3. อดีต: ขาดงาน (เมื่อวาน)
-  {
-    id: 103,
-    date: getDateString(-1),
-    empName: "วิภา",
-    role: "QA",
-    shift: "afternoon",
-    time: "13:00 - 22:00",
-    status: "absent",
-    checkIn: "-",
-    checkOut: "-",
-  },
-  // 4. ปัจจุบัน (วันนี้): กำลังทำงาน (Working)
-  {
-    id: 104,
-    date: getDateString(0),
-    empName: "จตุ (Jatu)",
-    role: "Frontend",
-    shift: "morning",
-    time: "08:00 - 17:00",
-    status: "working", // กำลังปฏิบัติงาน
-    checkIn: "07:58",
-    checkOut: null, // ยังไม่ออก
-  },
-  {
-    id: 105,
-    date: getDateString(0),
-    empName: "อารีย์",
-    role: "Designer",
-    shift: "afternoon",
-    time: "13:00 - 22:00",
-    status: "pending", // ยังไม่ถึงเวลาเข้างาน
-    checkIn: null,
-    checkOut: null,
-  },
-  // 5. อนาคต: กะงานที่กำลังจะมาถึง (พรุ่งนี้)
-  {
-    id: 106,
-    date: getDateString(1),
-    empName: "มานะ",
-    role: "DevOps",
-    shift: "morning",
-    time: "08:00 - 17:00",
-    status: "pending",
-  },
-  {
-    id: 107,
-    date: getDateString(1),
-    empName: "จตุ (Jatu)",
-    role: "Frontend",
-    shift: "morning",
-    time: "08:00 - 17:00",
-    status: "pending",
-  },
-  // 6. อนาคต: อีก 2 วัน
-  {
-    id: 108,
-    date: getDateString(2),
-    empName: "สมชาย",
-    role: "Backend",
-    shift: "night",
-    time: "22:00 - 06:00",
-    status: "pending",
-  },
-];
+import axios from "axios";
+import { AuthContext } from "../../context/AuthContext";
 
 const Schedule = () => {
+  const { user } = useContext(AuthContext);
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(new Date());
-  const [selectedShifts, setSelectedShifts] = useState([]);
+  const [scheduleData, setScheduleData] = useState([]);
+  const [loading, setLoading] = useState(false);
 
-  // Init Data: Load today's shift on mount
+  const apiUrl = import.meta.env.VITE_API_URL;
+
   useEffect(() => {
-    handleDateClick(new Date().getDate());
-  }, []);
+    fetchSchedule(currentDate.getMonth() + 1, currentDate.getFullYear());
+  }, [currentDate]);
+
+  const fetchSchedule = async (month, year) => {
+    setLoading(true);
+    try {
+      const token = localStorage.getItem("token");
+      const res = await axios.get(`${apiUrl}/api/schedule/my-schedule`, {
+        params: { month, year },
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setScheduleData(res.data);
+    } catch (err) {
+      console.error("Error fetching schedule:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const getDaysInMonth = (date) =>
     new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
@@ -134,19 +56,13 @@ const Schedule = () => {
       currentDate.getMonth(),
       day
     );
-    // Format YYYY-MM-DD with Local Timezone consideration
-    const offset = targetDate.getTimezoneOffset();
-    const dateLocal = new Date(targetDate.getTime() - offset * 60 * 1000);
-    const clickDateStr = dateLocal.toISOString().split("T")[0];
-
-    const shifts = mockSchedules.filter((s) => s.date === clickDateStr);
     setSelectedDate(targetDate);
-    setSelectedShifts(shifts);
   };
 
-  // Helper สำหรับการแสดงผลสถานะ
+  // --- Status Configuration ---
   const getStatusInfo = (status) => {
     switch (status) {
+      case "ontime":
       case "present":
         return {
           label: "มาปกติ",
@@ -159,17 +75,51 @@ const Schedule = () => {
           icon: "history_toggle_off",
           class: "status-late",
         };
-      case "absent":
-        return { label: "ขาดงาน", icon: "cancel", class: "status-absent" };
       case "working":
         return {
           label: "กำลังทำงาน",
           icon: "timelapse",
           class: "status-working",
         };
+      case "absent":
+        return { label: "ขาดงาน", icon: "cancel", class: "status-absent" };
+      case "holiday":
+        return {
+          label: "วันหยุด",
+          icon: "celebration",
+          class: "status-pending",
+        };
+      case "off":
+        return {
+          label: "วันหยุดประจำสัปดาห์",
+          icon: "weekend",
+          class: "status-pending",
+        };
+      case "scheduled":
       default:
         return { label: "รอลงเวลา", icon: "schedule", class: "status-pending" };
     }
+  };
+
+  // ดึงข้อมูลกะงานและวันหยุดของวันที่เลือก
+  const getSelectedDayData = () => {
+    if (!selectedDate) return { shifts: [], holiday: null };
+
+    const offset = selectedDate.getTimezoneOffset();
+    const dateLocal = new Date(selectedDate.getTime() - offset * 60 * 1000);
+    const dateStr = dateLocal.toISOString().split("T")[0];
+
+    // กรอง Work Shifts
+    const shifts = scheduleData.filter(
+      (s) => s.date === dateStr && s.type === "work"
+    );
+
+    // หา Holiday หรือ Off Day
+    const holiday = scheduleData.find(
+      (s) => s.date === dateStr && (s.type === "holiday" || s.type === "off")
+    );
+
+    return { shifts, holiday };
   };
 
   const renderCalendar = () => {
@@ -187,13 +137,16 @@ const Schedule = () => {
         currentDate.getMonth(),
         i
       );
-
-      // Fix Local Date String issue
       const offset = dateObj.getTimezoneOffset();
       const dateLocal = new Date(dateObj.getTime() - offset * 60 * 1000);
       const dateStr = dateLocal.toISOString().split("T")[0];
 
-      const dayShifts = mockSchedules.filter((s) => s.date === dateStr);
+      const dayData = scheduleData.filter((s) => s.date === dateStr);
+      const dayShifts = dayData.filter((s) => s.type === "work");
+      const holiday = dayData.find(
+        (s) => s.type === "holiday" || s.type === "off"
+      );
+
       const isToday = new Date().toDateString() === dateObj.toDateString();
       const isWeekend = dateObj.getDay() === 0 || dateObj.getDay() === 6;
       const isSelected =
@@ -204,8 +157,9 @@ const Schedule = () => {
           key={i}
           className={`calendar-day 
             ${isToday ? "today" : ""} 
-            ${isWeekend ? "weekend" : ""}
-            ${isSelected ? "selected" : ""}
+            ${isWeekend ? "weekend" : ""} 
+            ${isSelected ? "selected" : ""} 
+            ${holiday?.type === "holiday" ? "holiday" : ""}
           `}
           onClick={() => handleDateClick(i)}
         >
@@ -221,18 +175,39 @@ const Schedule = () => {
             )}
           </div>
 
+          {/* Holiday / Off Label */}
+          {holiday && (
+            <div className="holiday-label" title={holiday.title}>
+              <span
+                className="material-symbols-rounded"
+                style={{ fontSize: "12px" }}
+              >
+                {holiday.type === "holiday" ? "celebration" : "weekend"}
+              </span>
+              <span>{holiday.title}</span>
+            </div>
+          )}
+
+          {/* Shift Items */}
           <div className="d-flex flex-column gap-1 mt-1">
-            {dayShifts.slice(0, 3).map(
-              (
-                shift,
-                idx // Show up to 3 items
-              ) => (
-                <div key={idx} className={`shift-item shift-${shift.shift}`}>
-                  <span className={`status-dot-mini ${shift.status}`}></span>
-                  <span>{shift.empName.split(" ")[0]}</span>
+            {dayShifts.slice(0, 3).map((shift, idx) => {
+              // Map status for CSS class
+              let statusClass = "pending";
+              if (shift.status === "ontime") statusClass = "present";
+              else if (shift.status === "scheduled") statusClass = "pending";
+              else statusClass = shift.status; // late, absent, working
+
+              return (
+                <div
+                  key={idx}
+                  className="shift-item"
+                  title={`${shift.title} (${shift.shift})`}
+                >
+                  <span className={`status-dot-mini ${statusClass}`}></span>
+                  <span>{shift.title}</span>
                 </div>
-              )
-            )}
+              );
+            })}
             {dayShifts.length > 3 && (
               <small
                 className="text-muted text-center"
@@ -263,6 +238,9 @@ const Schedule = () => {
     "December",
   ];
 
+  const { shifts: selectedShifts, holiday: selectedHoliday } =
+    getSelectedDayData();
+
   return (
     <div className="container-fluid py-4 px-4 mt-4">
       {/* Header */}
@@ -275,7 +253,7 @@ const Schedule = () => {
             >
               calendar_month
             </span>
-            Shift & Attendance
+            My Schedule
           </h2>
           <p className="text-muted m-0">ตรวจสอบกะงานและการลงเวลาเข้า-ออก</p>
         </div>
@@ -315,39 +293,51 @@ const Schedule = () => {
                 <span className="text-dark">{currentDate.getFullYear()}</span>
               </h4>
               <div className="d-flex gap-2">
-                <div className="nav-btn" onClick={handlePrevMonth}>
+                <button className="nav-btn" onClick={handlePrevMonth}>
                   <span className="material-symbols-rounded">chevron_left</span>
-                </div>
-                <div
+                </button>
+                <button
                   className="nav-btn"
                   onClick={() => {
-                    setCurrentDate(new Date());
-                    setSelectedDate(new Date());
+                    const now = new Date();
+                    setCurrentDate(now);
+                    setSelectedDate(now);
                   }}
                 >
                   <span className="material-symbols-rounded">today</span>
-                </div>
-                <div className="nav-btn" onClick={handleNextMonth}>
+                </button>
+                <button className="nav-btn" onClick={handleNextMonth}>
                   <span className="material-symbols-rounded">
                     chevron_right
                   </span>
-                </div>
+                </button>
               </div>
             </div>
 
-            <div className="calendar-grid mb-2">
-              {["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"].map((day) => (
-                <div key={day} className="weekday-header">
-                  {day}
+            {loading ? (
+              <div className="text-center py-5">
+                <div className="spinner-border text-primary" role="status">
+                  <span className="visually-hidden">Loading...</span>
                 </div>
-              ))}
-            </div>
-
-            <div className="calendar-grid">{renderCalendar()}</div>
+              </div>
+            ) : (
+              <>
+                <div className="calendar-grid mb-2">
+                  {["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"].map(
+                    (day) => (
+                      <div key={day} className="weekday-header">
+                        {day}
+                      </div>
+                    )
+                  )}
+                </div>
+                <div className="calendar-grid">{renderCalendar()}</div>
+              </>
+            )}
           </div>
         </div>
 
-        {/* Detail Panel */}
+        {/* Side Panel */}
         <div className="col-lg-4 col-xl-3">
           <div className="detail-panel">
             <h5 className="fw-bold mb-4 d-flex align-items-center gap-2 border-bottom pb-3">
@@ -363,43 +353,53 @@ const Schedule = () => {
                 : "รายละเอียด"}
             </h5>
 
+            {/* Holiday / Off Banner */}
+            {selectedHoliday && (
+              <div className="holiday-banner fade-in">
+                <span className="material-symbols-rounded d-block fs-1 mb-2">
+                  {selectedHoliday.type === "holiday"
+                    ? "celebration"
+                    : "weekend"}
+                </span>
+                <h5 className="fw-bold m-0">{selectedHoliday.title}</h5>
+                <small>
+                  {selectedHoliday.type === "holiday"
+                    ? "วันหยุดราชการ"
+                    : "วันหยุดพักผ่อน"}
+                </small>
+              </div>
+            )}
+
+            {/* Shift List */}
             {selectedShifts.length > 0 ? (
               <div
                 className="d-flex flex-column gap-2 overflow-auto"
                 style={{ maxHeight: "600px" }}
               >
-                {selectedShifts.map((s) => {
+                {selectedShifts.map((s, idx) => {
                   const statusInfo = getStatusInfo(s.status);
 
                   return (
-                    <div key={s.id} className="detail-row">
-                      {/* Row Header */}
+                    <div key={idx} className="detail-row">
                       <div className="d-flex align-items-center w-100 mb-2">
-                        <div className="user-avatar">{s.empName.charAt(0)}</div>
+                        <div className="user-avatar">
+                          {user?.name_th ? user.name_th.charAt(0) : "U"}
+                        </div>
                         <div className="flex-grow-1">
                           <h6 className="mb-0 fw-bold text-dark">
-                            {s.empName}
+                            {user?.name_th || "User"}
                           </h6>
-                          <small className="text-muted">{s.role}</small>
+                          <small className="text-muted">
+                            {user?.position || "Employee"}
+                          </small>
                         </div>
                         <div className="text-end">
-                          <span
-                            className={`badge rounded-pill 
-                                        ${
-                                          s.shift === "morning"
-                                            ? "bg-primary-subtle text-primary"
-                                            : s.shift === "night"
-                                            ? "bg-purple-subtle text-purple"
-                                            : "bg-warning-subtle text-warning"
-                                        } 
-                                        mb-1 d-inline-block border`}
-                          >
-                            {s.shift.toUpperCase()}
+                          <span className="badge rounded-pill bg-light text-dark border">
+                            {s.title}
                           </span>
                         </div>
                       </div>
 
-                      {/* Row Body: Info */}
                       <div className="w-100 ps-1">
                         <div className="d-flex justify-content-between align-items-center mb-2">
                           <small className="text-muted d-flex align-items-center gap-1">
@@ -409,7 +409,7 @@ const Schedule = () => {
                             >
                               schedule
                             </span>
-                            {s.time}
+                            {s.shift}
                           </small>
                           <div
                             className={`status-badge-lg ${statusInfo.class}`}
@@ -424,8 +424,8 @@ const Schedule = () => {
                           </div>
                         </div>
 
-                        {/* แสดงเวลาเข้าออกจริง เฉพาะถ้ามีการลงเวลาแล้ว (Present, Late, Working) */}
-                        {(s.status === "present" ||
+                        {/* Show Check-in/out only if action taken */}
+                        {(s.status === "ontime" ||
                           s.status === "late" ||
                           s.status === "working") && (
                           <div className="attendance-info">
@@ -438,7 +438,7 @@ const Schedule = () => {
                               </span>
                               IN: {s.checkIn || "-"}
                             </div>
-                            {s.checkOut && (
+                            {s.checkOut && s.checkOut !== "-" && (
                               <div className="time-pill">
                                 <span
                                   className="material-symbols-rounded text-danger"
@@ -449,12 +449,13 @@ const Schedule = () => {
                                 OUT: {s.checkOut}
                               </div>
                             )}
-                            {!s.checkOut && s.status === "working" && (
-                              <div className="time-pill border-0 bg-transparent text-primary">
-                                <span className="spinner-grow spinner-grow-sm me-1"></span>{" "}
-                                On Duty
-                              </div>
-                            )}
+                            {(!s.checkOut || s.checkOut === "-") &&
+                              s.status === "working" && (
+                                <div className="time-pill border-0 bg-transparent text-primary">
+                                  <span className="spinner-grow spinner-grow-sm me-1"></span>{" "}
+                                  On Duty
+                                </div>
+                              )}
                           </div>
                         )}
                       </div>
@@ -463,15 +464,17 @@ const Schedule = () => {
                 })}
               </div>
             ) : (
-              <div className="text-center py-5 text-muted opacity-50 h-100 d-flex flex-column justify-content-center align-items-center">
-                <span
-                  className="material-symbols-rounded"
-                  style={{ fontSize: "64px" }}
-                >
-                  event_busy
-                </span>
-                <p className="mt-2">ไม่มีตารางงานในวันนี้</p>
-              </div>
+              !selectedHoliday && (
+                <div className="text-center py-5 text-muted opacity-50 h-100 d-flex flex-column justify-content-center align-items-center">
+                  <span
+                    className="material-symbols-rounded"
+                    style={{ fontSize: "64px" }}
+                  >
+                    event_busy
+                  </span>
+                  <p className="mt-2">ไม่มีตารางงานในวันนี้</p>
+                </div>
+              )
             )}
           </div>
         </div>
