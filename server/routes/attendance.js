@@ -1,62 +1,107 @@
 const express = require("express");
 const router = express.Router();
 const db = require("../config/db");
-const moment = require("moment");
-const jwt = require("jsonwebtoken");
+const verifyToken = require("../middleware/auth");
 
-// Middleware ตรวจสอบ Token
-const verifyToken = (req, res, next) => {
-  const token = req.headers["authorization"]?.split(" ")[1];
-  if (!token) return res.status(403).send("Token required");
+// GET /api/schedule/my-schedule
+router.get("/my-schedule", verifyToken, async (req, res) => {
   try {
-    req.user = jwt.verify(token, process.env.JWT_SECRET || "secretkey");
-    next();
+    const userId = req.user.id;
+    const { month, year } = req.query;
+
+    if (!month || !year) {
+      return res.status(400).json({ error: "Month and Year are required" });
+    }
+
+    // 1. ดึงตารางงาน (Plan) เชื่อมกับ การลงเวลาจริง (Actual)
+    const sql = `
+      SELECT 
+        es.id,
+        DATE_FORMAT(es.scheduled_date, '%Y-%m-%d') as date_str,
+        es.status as schedule_status, -- สถานะจากตารางงาน (scheduled, off, holiday)
+        es.note,
+        ws.name as shift_name,
+        TIME_FORMAT(ws.start_time, '%H:%i') as shift_start,
+        TIME_FORMAT(ws.end_time, '%H:%i') as shift_end,
+        a.clock_in,      -- เวลาเข้างานจริงจากตาราง attendance
+        a.clock_out,     -- เวลาออกงานจริงจากตาราง attendance
+        a.status as attendance_status -- สถานะจากระบบลงเวลา (late, on_time)
+      FROM employee_schedules es
+      LEFT JOIN work_shifts ws ON es.shift_id = ws.id
+      LEFT JOIN attendance a ON es.user_id = a.user_id AND es.scheduled_date = a.date
+      WHERE es.user_id = ? 
+      AND MONTH(es.scheduled_date) = ? 
+      AND YEAR(es.scheduled_date) = ?
+      ORDER BY es.scheduled_date ASC
+    `;
+
+    const [rows] = await db.query(sql, [userId, month, year]);
+
+    // 2. แปลงข้อมูล
+    const formattedData = rows.map((row) => {
+      let type = "work";
+      let status = "scheduled";
+      let title = row.shift_name;
+
+      // --- Logic คำนวณสถานะ ---
+      if (row.schedule_status === "off" || row.schedule_status === "holiday") {
+        type = "off";
+        status = "off";
+        title = "วันหยุด (Off)";
+      } else if (row.clock_in) {
+        // มีการลงเวลาจริงแล้ว
+        type = "work";
+        // เช็คสถานะจากตาราง attendance หรือคำนวณใหม่
+        if (row.attendance_status === "late") {
+          status = "late";
+        } else {
+          status = "ontime";
+        }
+      } else {
+        // ยังไม่ลงเวลา
+        const scheduleDate = new Date(row.date_str);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        if (scheduleDate < today) {
+          status = "absent"; // ผ่านมาแล้ว = ขาดงาน
+        } else {
+          status = "scheduled"; // อนาคต = รอปฏิบัติงาน
+        }
+      }
+
+      // Format เวลา
+      const timeInStr = row.clock_in
+        ? new Date(row.clock_in).toLocaleTimeString("th-TH", {
+            hour: "2-digit",
+            minute: "2-digit",
+          })
+        : null;
+      const timeOutStr = row.clock_out
+        ? new Date(row.clock_out).toLocaleTimeString("th-TH", {
+            hour: "2-digit",
+            minute: "2-digit",
+          })
+        : null;
+
+      return {
+        date: row.date_str,
+        type,
+        status, // ontime, late, absent, scheduled, off
+        shiftTime:
+          row.shift_start && row.shift_end
+            ? `${row.shift_start} - ${row.shift_end}`
+            : "",
+        actualIn: timeInStr,
+        actualOut: timeOutStr,
+        title: row.note || title,
+      };
+    });
+
+    res.json(formattedData);
   } catch (err) {
-    res.status(401).send("Invalid Token");
-  }
-};
-
-// ลงเวลาเข้างาน (Clock In)
-router.post("/clock-in", verifyToken, async (req, res) => {
-  const { image } = req.body;
-  const userId = req.user.id;
-  const now = moment();
-  const date = now.format("YYYY-MM-DD");
-  const datetime = now.format("YYYY-MM-DD HH:mm:ss");
-
-  // ตรวจสอบว่าวันนี้ลงเวลาไปหรือยัง
-  const [existing] = await db.query(
-    "SELECT * FROM attendance WHERE user_id = ? AND date = ?",
-    [userId, date]
-  );
-  if (existing.length > 0)
-    return res.status(400).json({ message: "วันนี้คุณลงเวลาเข้างานไปแล้ว" });
-
-  // เช็คสาย (สมมติเข้างาน 09:00)
-  const shiftStart = moment(`${date} 09:00:00`);
-  const status = now.isAfter(shiftStart) ? "late" : "on_time";
-
-  try {
-    await db.query(
-      "INSERT INTO attendance (user_id, date, clock_in, clock_in_image, status) VALUES (?, ?, ?, ?, ?)",
-      [userId, date, datetime, image, status]
-    );
-    res.json({ message: "บันทึกเวลาเข้างานสำเร็จ", status });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// ดูประวัติการลงเวลาของตัวเอง
-router.get("/history", verifyToken, async (req, res) => {
-  try {
-    const [rows] = await db.query(
-      "SELECT * FROM attendance WHERE user_id = ? ORDER BY date DESC LIMIT 30",
-      [req.user.id]
-    );
-    res.json(rows);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error("Fetch Schedule Error:", err);
+    res.status(500).json({ error: "Server Error" });
   }
 });
 

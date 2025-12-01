@@ -1,323 +1,333 @@
 /* Schedule.css */
+@import url("https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600&display=swap");
 
-/* Page Layout */
-.schedule-page {
-  padding-top: 80px; /* เว้นที่ให้ Navbar */
-  min-height: 100vh;
-  /* background-color: #f8f9fa; */
+:root {
+  --primary-color: #4e73df;
+  --bg-color: #f8f9fc;
+  --card-hover: #f1f3f9;
+
+  --weekend-color: #e74a3b; /* สีแดงสำหรับวันเสาร์-อาทิตย์ */
+  --weekend-bg: #fff5f5;
+
+  /* Status Colors */
+  --status-present-bg: #d1fae5;
+  --status-present-text: #065f46;
+  --status-late-bg: #ffedd5;
+  --status-late-text: #9a3412;
+  --status-absent-bg: #fee2e2;
+  --status-absent-text: #991b1b;
+  --status-pending-bg: #f3f4f6;
+  --status-pending-text: #6b7280;
+  --status-working-bg: #e0f2fe;
+  --status-working-text: #0369a1;
+}
+
+body {
   font-family: "Kanit", sans-serif;
+  background-color: var(--bg-color);
 }
 
-/* Calendar Controls */
-.calendar-controls {
-  display: flex;
-  align-items: center;
+/* --- Layout --- */
+.calendar-container {
   background: white;
-  padding: 6px;
-  border-radius: 50px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  border-radius: 20px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+  padding: 20px;
+  height: 100%;
 }
 
-.current-month {
-  font-size: 1.1rem;
-  font-weight: 700;
-  padding: 0 15px;
-  min-width: 180px;
-  text-align: center;
+.calendar-header {
   display: flex;
+  justify-content: space-between;
   align-items: center;
-  justify-content: center;
+  margin-bottom: 20px;
 }
 
-.btn-nav {
+.nav-btn {
+  background: white;
+  border: 1px solid #e3e6f0;
+  border-radius: 50%;
   width: 36px;
   height: 36px;
-  border-radius: 50%;
-  border: none;
-  background: transparent;
-  color: #64748b;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: all 0.2s;
+  color: #5a5c69;
+  cursor: pointer;
 }
 
-.btn-nav:hover {
-  background-color: #f1f5f9;
-  color: #1e2a45;
-}
-
-.btn-today {
-  border: 1px solid #e2e8f0;
-  background: white;
-  color: #64748b;
-  padding: 6px 16px;
-  border-radius: 20px;
-  font-size: 0.85rem;
-  font-weight: 600;
-  transition: all 0.2s;
-}
-
-.btn-today:hover {
-  background-color: #1e2a45;
+.nav-btn:hover {
+  background: var(--primary-color);
   color: white;
-  border-color: #1e2a45;
+  border-color: var(--primary-color);
 }
 
-/* Stats Legend */
-.schedule-stats {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 16px;
-  justify-content: center; /* หรือ flex-start */
-  background: white;
-  padding: 12px 20px;
-  border-radius: 12px;
-  width: fit-content;
-  margin: 0 auto; /* จัดกึ่งกลาง */
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
-}
-
-.stat-item {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 0.85rem;
-  color: #64748b;
-  font-weight: 500;
-}
-
-.dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-}
-.dot.ontime {
-  background: #10b981;
-}
-.dot.late {
-  background: #f59e0b;
-}
-.dot.leave {
-  background: #6366f1;
-}
-.dot.holiday {
-  background: #ec4899;
-}
-.dot.absent {
-  background: #ef4444;
-}
-
-/* Calendar Grid */
-.calendar-wrapper {
-  overflow: hidden;
-}
-
-.weekdays-grid {
+/* --- Grid System --- */
+.calendar-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  background-color: #f8fafc;
-  border-bottom: 1px solid #e2e8f0;
+  gap: 8px;
 }
 
 .weekday-header {
-  padding: 12px;
   text-align: center;
-  font-weight: 600;
-  color: #64748b;
+  font-weight: 500;
+  color: #858796;
+  padding: 10px 0;
   font-size: 0.9rem;
 }
 
-.days-grid {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  /* background-color: #e2e8f0; Gap line style */
+/* วันเสาร์-อาทิตย์ สีแดง */
+.weekday-header:nth-child(1), /* Sunday */
+.weekday-header:nth-child(7) {
+  /* Saturday */
+  color: var(--weekend-color);
 }
 
+/* --- Calendar Day Cell --- */
 .calendar-day {
-  background-color: white;
+  background: white;
+  border: 1px solid #e3e6f0;
+  border-radius: 12px;
   min-height: 100px;
-  border-right: 1px solid #f1f5f9;
-  border-bottom: 1px solid #f1f5f9;
   padding: 8px;
-  cursor: pointer;
-  transition: all 0.2s;
   position: relative;
+  transition: all 0.2s ease;
+  cursor: pointer;
   display: flex;
   flex-direction: column;
   gap: 4px;
 }
 
 .calendar-day:hover {
-  background-color: #f8fafc;
-  z-index: 1; /* ให้ลอยขึ้นมาทับเส้นขอบ */
-}
-
-.calendar-day.selected {
-  background-color: #eff6ff;
-  box-shadow: inset 0 0 0 2px #3b82f6;
+  border-color: var(--primary-color);
+  background-color: var(--card-hover);
+  box-shadow: 0 5px 15px rgba(78, 115, 223, 0.1);
+  transform: translateY(-3px);
+  z-index: 2;
 }
 
 .calendar-day.empty {
-  background-color: #fcfcfc;
+  background: transparent;
+  border: none;
   cursor: default;
+}
+
+/* Selected State */
+.calendar-day.selected {
+  border: 2px solid var(--primary-color);
+  background-color: rgba(78, 115, 223, 0.05);
 }
 
 .day-number {
   font-weight: 600;
-  color: #1e293b;
-  font-size: 0.9rem;
-  width: 28px;
-  height: 28px;
+  color: #2e2f38;
+  margin-bottom: 2px;
+  width: 24px;
+  height: 24px;
   display: flex;
   align-items: center;
   justify-content: center;
   border-radius: 50%;
+  font-size: 0.9rem;
 }
 
+/* Today Style */
 .calendar-day.today .day-number {
-  background-color: #1e2a45;
+  color: white;
+  background: var(--primary-color);
+}
+
+/* Weekend Style */
+.calendar-day.weekend {
+  background-color: var(--weekend-bg);
+}
+.calendar-day.weekend .day-number {
+  color: var(--weekend-color);
+}
+/* Weekend + Today */
+.calendar-day.weekend.today .day-number {
+  background: var(--weekend-color);
   color: white;
 }
 
-/* Status Styles inside Calendar Cell */
-.calendar-day.ontime {
-  border-left: 3px solid #10b981;
-}
-.calendar-day.late {
-  border-left: 3px solid #f59e0b;
-}
-.calendar-day.absent {
-  border-left: 3px solid #ef4444;
-}
-.calendar-day.holiday {
-  background-color: #fdf2f8;
-}
-.calendar-day.leave {
-  background-color: #eef2ff;
-}
-
-/* Pills inside Cell */
-.shift-pill {
+/* --- Shift Items inside Calendar --- */
+.shift-item {
   font-size: 0.7rem;
-  padding: 2px 6px;
-  border-radius: 4px;
-  display: flex;
-  align-items: center;
-  gap: 2px;
-  margin-top: 2px;
-}
-
-.ontime .shift-pill {
-  color: #047857;
-  background: #d1fae5;
-}
-.late .shift-pill {
-  color: #b45309;
-  background: #fef3c7;
-}
-.absent .shift-pill {
-  color: #b91c1c;
-  background: #fee2e2;
-}
-
-.event-pill {
-  font-size: 0.7rem;
-  padding: 2px 6px;
+  padding: 3px 6px;
   border-radius: 4px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  text-align: center;
-}
-.event-pill.holiday {
-  color: #be185d;
-  background: #fce7f3;
-}
-.event-pill.leave {
-  color: #4338ca;
-  background: #e0e7ff;
-}
-
-.icon-mini {
-  font-size: 14px;
-}
-
-/* Detail Panel */
-.selected-day-info {
-  margin-top: 1rem;
-}
-
-.date-large {
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: #1e2a45;
-  border-bottom: 2px solid #f1f5f9;
-  padding-bottom: 12px;
-}
-
-.info-row {
   display: flex;
-  justify-content: space-between;
-  padding: 12px 0;
-  border-bottom: 1px solid #f8fafc;
+  align-items: center;
+  gap: 4px;
+  background-color: #f8f9fa; /* Default bg */
+  color: #333;
 }
 
-.info-row .label {
-  color: #64748b;
+/* Shift Colors based on Shift Type (Optional) */
+.shift-item.shift-morning {
+  background-color: #e3f2fd;
+  color: #1565c0;
 }
-.info-row .value {
-  color: #1e293b;
-  font-weight: 500;
+.shift-item.shift-afternoon {
+  background-color: #fff3e0;
+  color: #ef6c00;
+}
+.shift-item.shift-night {
+  background-color: #f3e5f5;
+  color: #7b1fa2;
 }
 
-.status-badge-lg {
-  text-align: center;
-  padding: 10px;
-  border-radius: 8px;
-  font-weight: 700;
+/* Status Dots in Calendar */
+.status-dot-mini {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
+}
+.status-dot-mini.present {
+  background-color: #10b981;
+}
+.status-dot-mini.late {
+  background-color: #f59e0b;
+}
+.status-dot-mini.absent {
+  background-color: #ef4444;
+}
+.status-dot-mini.working {
+  background-color: #0ea5e9;
+  box-shadow: 0 0 4px #0ea5e9;
+}
+.status-dot-mini.pending {
+  background-color: #cbd5e1;
+}
+
+/* --- Detail Panel --- */
+.detail-panel {
+  background: white;
+  border-radius: 20px;
+  padding: 24px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+  height: 100%;
+  animation: slideIn 0.3s ease-out;
+  display: flex;
+  flex-direction: column;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.detail-row {
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+  border-radius: 16px;
+  margin-bottom: 12px;
+  background: #fff;
+  border: 1px solid #f1f5f9;
+  transition: all 0.2s;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+}
+
+.detail-row:hover {
+  border-color: var(--primary-color);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.06);
+}
+
+.user-avatar {
+  width: 42px;
+  height: 42px;
+  background: #eaecf4;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 12px;
+  font-weight: bold;
+  color: #5a5c69;
   font-size: 1.1rem;
 }
 
-.status-badge-lg.ontime {
-  background: #d1fae5;
-  color: #047857;
-}
-.status-badge-lg.late {
-  background: #fef3c7;
-  color: #b45309;
-}
-.status-badge-lg.absent {
-  background: #fee2e2;
-  color: #b91c1c;
+/* Status Badges in Detail */
+.status-badge-lg {
+  font-size: 0.7rem;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
 }
 
-.special-day-box {
-  text-align: center;
-  padding: 30px;
-  border-radius: 16px;
-  margin-top: 20px;
+/* Status Variants Implementation */
+.status-present {
+  background-color: var(--status-present-bg);
+  color: var(--status-present-text);
 }
-.special-day-box.holiday {
-  background: #fce7f3;
-  color: #be185d;
+.status-late {
+  background-color: var(--status-late-bg);
+  color: var(--status-late-text);
 }
-.special-day-box.leave {
-  background: #e0e7ff;
-  color: #4338ca;
+.status-absent {
+  background-color: var(--status-absent-bg);
+  color: var(--status-absent-text);
+}
+.status-working {
+  background-color: var(--status-working-bg);
+  color: var(--status-working-text);
+}
+.status-pending {
+  background-color: var(--status-pending-bg);
+  color: var(--status-pending-text);
 }
 
-/* Responsive adjustments */
+/* Attendance Time Info */
+.attendance-info {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px dashed #e2e8f0;
+  display: flex;
+  gap: 10px;
+  font-size: 0.75rem;
+}
+
+.time-pill {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: #f8fafc;
+  color: #64748b;
+  font-weight: 500;
+  border: 1px solid #f1f5f9;
+}
+
+/* Mobile Responsive */
 @media (max-width: 768px) {
   .calendar-day {
-    min-height: 60px; /* ลดความสูงในมือถือ */
+    min-height: 70px;
     padding: 4px;
   }
-  .shift-pill .shift-text {
-    display: none; /* ซ่อนเวลาในมือถือให้เหลือแต่ icon/สี */
+  .shift-item span:not(.status-dot-mini) {
+    display: none; /* Hide text on mobile */
   }
-  .schedule-stats {
-    width: 100%;
+  .shift-item {
     justify-content: center;
+    padding: 2px;
   }
 }
