@@ -34,8 +34,9 @@ function ManageEmployees() {
   useEffect(() => {
     const results = users.filter((user) => {
       const term = searchTerm.toLowerCase();
-      // เพิ่มการค้นหาจาก emp_code ด้วย
+      // เพิ่มการค้นหาจาก username และ emp_code
       return (
+        user.username?.toLowerCase().includes(term) || // <--- เพิ่มตรงนี้
         user.name_th?.toLowerCase().includes(term) ||
         user.name_en?.toLowerCase().includes(term) ||
         user.email?.toLowerCase().includes(term) ||
@@ -72,7 +73,7 @@ function ManageEmployees() {
     setCurrentPage(pageNumber);
   };
 
-  // --- Handlers (ส่วน Modal และ Image Upload คงเดิม) ---
+  // --- Handlers ---
   const handleOpenAddModal = () => {
     setEditingUser(null);
     setPreviewUrl(null);
@@ -227,7 +228,7 @@ function ManageEmployees() {
             <input
               type="text"
               className="custom-search-input"
-              placeholder="ค้นหาชื่อ, รหัส, อีเมล..."
+              placeholder="ค้นหาชื่อ, username, อีเมล..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -263,7 +264,6 @@ function ManageEmployees() {
       </div>
 
       {/* Table */}
-      {/* Table */}
       <div className="custom-card">
         <div className="table-responsive">
           <table className="table custom-table mb-0">
@@ -271,7 +271,8 @@ function ManageEmployees() {
               <tr>
                 <th className="ps-4">พนักงาน</th>
                 <th>สิทธิ์การเข้าถึง</th>
-                <th>อีเมลติดต่อ</th>
+                {/* เปลี่ยน Header ให้ครอบคลุม Username */}
+                <th>บัญชีผู้ใช้ / อีเมล</th>
                 <th>ตำแหน่งงาน</th>
                 <th className="text-end pe-4">
                   {showDeleted ? "เวลาที่ลบ" : "การจัดการ"}
@@ -279,11 +280,9 @@ function ManageEmployees() {
               </tr>
             </thead>
             <tbody>
-              {/* เปลี่ยนจาก filteredUsers เป็น currentItems */}
               {currentItems.length > 0 ? (
                 currentItems.map((u) => (
                   <tr key={u.id}>
-                    {/* ... (เนื้อหาใน Table Row เหมือนเดิมทุกประการ) ... */}
                     <td className="ps-4">
                       <div className="d-flex align-items-center gap-3">
                         <div className="user-avatar-wrapper">
@@ -342,11 +341,23 @@ function ManageEmployees() {
                         </div>
                       )}
                     </td>
-                    <td
-                      className="text-muted"
-                      style={{ fontFamily: "monospace", fontSize: "0.9rem" }}
-                    >
-                      {u.email}
+                    <td>
+                      <div className="d-flex flex-column">
+                        {/* แสดง Username สีเข้ม */}
+                        <span
+                          className="fw-bold text-dark"
+                          style={{ fontSize: "0.9rem" }}
+                        >
+                          {u.username}
+                        </span>
+                        {/* แสดง Email สีจางลง */}
+                        <span
+                          className="text-muted small"
+                          style={{ fontFamily: "monospace" }}
+                        >
+                          {u.email}
+                        </span>
+                      </div>
                     </td>
                     <td>
                       <div className="d-flex align-items-center text-dark fw-medium">
@@ -425,7 +436,6 @@ function ManageEmployees() {
                 </span>
               </button>
 
-              {/* สร้างปุ่มเลขหน้า */}
               {[...Array(totalPages)].map((_, index) => (
                 <button
                   key={index + 1}
@@ -451,7 +461,8 @@ function ManageEmployees() {
           </div>
         )}
       </div>
-      {/* --- Modal (คงเดิม) --- */}
+
+      {/* --- Modal Form --- */}
       {showModal && (
         <>
           <div
@@ -519,7 +530,7 @@ function ManageEmployees() {
                                 onClick={handleRemoveImage}
                                 title="ลบรูป"
                               >
-                                <span className="material-symbols-outlined fs-6">
+                                <span className="material-symbols-rounded fs-6">
                                   close
                                 </span>
                               </button>
@@ -544,7 +555,7 @@ function ManageEmployees() {
                           />
                         </div>
                       </div>
-                      {/* Inputs */}
+                      {/* Personal Info Inputs */}
                       <div className="col-md-8">
                         <div className="form-section-title mt-0">
                           ข้อมูลส่วนตัว (TH)
@@ -632,13 +643,13 @@ function ManageEmployees() {
                           </div>
                         </div>
                       </div>
-                      {/* System Account */}
+                      {/* System Account Information */}
                       <div className="col-12">
                         <div className="form-section-title">
                           ข้อมูลเข้าระบบ (System)
                         </div>
                         <div className="row g-3">
-                          {/* --- ส่วนที่เพิ่มใหม่: รหัสพนักงาน (emp_code) --- */}
+                          {/* Row 1: Identifiers */}
                           <div className="col-md-4">
                             <label className="form-label text-muted small fw-bold">
                               รหัสพนักงาน <span className="text-danger">*</span>
@@ -648,18 +659,45 @@ function ManageEmployees() {
                               className="form-control form-control-custom"
                               placeholder="เช่น 000123"
                               required
-                              maxLength={6} // จำกัด 6 ตัวอักษร
+                              maxLength={6}
                               defaultValue={editingUser?.emp_code}
-                              // เพิ่ม pattern ถ้าต้องการบังคับตัวเลขเท่านั้น (Optional)
-                              // pattern="[0-9]{6}"
-                              // title="กรุณากรอกตัวเลข 6 หลัก"
                             />
                           </div>
 
-                          {/* ปรับ col-md-6 เป็น col-md-8 เพื่อให้ Email ยาวขึ้นรับกับดีไซน์ */}
-                          <div className="col-md-8">
+                          {/* เพิ่มช่อง Username */}
+                          <div className="col-md-4">
                             <label className="form-label text-muted small fw-bold">
-                              Email
+                              ชื่อผู้ใช้งาน (Username){" "}
+                              <span className="text-danger">*</span>
+                            </label>
+                            <input
+                              name="username"
+                              className="form-control form-control-custom"
+                              placeholder="เช่น somchai.j"
+                              required
+                              defaultValue={editingUser?.username}
+                            />
+                          </div>
+
+                          <div className="col-md-4">
+                            <label className="form-label text-muted small fw-bold">
+                              สิทธิ์การใช้งาน (Role)
+                            </label>
+                            <select
+                              name="role"
+                              className="form-select form-control-custom"
+                              style={{ backgroundImage: "none" }}
+                              defaultValue={editingUser?.role || "user"}
+                            >
+                              <option value="user">User (พนักงานทั่วไป)</option>
+                              <option value="admin">Admin (ผู้ดูแลระบบ)</option>
+                            </select>
+                          </div>
+
+                          {/* Row 2: Login Credentials */}
+                          <div className="col-md-6">
+                            <label className="form-label text-muted small fw-bold">
+                              Email <span className="text-danger">*</span>
                             </label>
                             <input
                               name="email"
@@ -671,8 +709,7 @@ function ManageEmployees() {
                             />
                           </div>
 
-                          {/* ส่วน Password, Position, Role เหมือนเดิม แต่จัด Layout ใหม่นิดหน่อย */}
-                          <div className="col-md-4">
+                          <div className="col-md-6">
                             <label className="form-label text-muted small fw-bold">
                               Password{" "}
                               {editingUser && (
@@ -692,31 +729,17 @@ function ManageEmployees() {
                             />
                           </div>
 
-                          <div className="col-md-4">
+                          {/* Row 3: Position */}
+                          <div className="col-md-12">
                             <label className="form-label text-muted small fw-bold">
                               ตำแหน่ง (Position)
                             </label>
                             <input
                               name="position"
                               className="form-control form-control-custom"
-                              placeholder="เช่น Software Engineer"
+                              placeholder="เช่น Software Engineer, HR Manager"
                               defaultValue={editingUser?.position}
                             />
-                          </div>
-
-                          <div className="col-md-4">
-                            <label className="form-label text-muted small fw-bold">
-                              สิทธิ์การใช้งาน (Role)
-                            </label>
-                            <select
-                              name="role"
-                              className="form-select form-control-custom"
-                              style={{ backgroundImage: "none" }}
-                              defaultValue={editingUser?.role || "user"}
-                            >
-                              <option value="user">User (พนักงานทั่วไป)</option>
-                              <option value="admin">Admin (ผู้ดูแลระบบ)</option>
-                            </select>
                           </div>
                         </div>
                       </div>{" "}

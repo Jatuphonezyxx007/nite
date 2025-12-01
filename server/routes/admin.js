@@ -79,6 +79,7 @@ router.post(
   upload.single("profile_image"),
   async (req, res) => {
     const {
+      username,
       emp_code,
       prefix_th,
       name_th,
@@ -102,11 +103,12 @@ router.post(
 
       const sql = `
       INSERT INTO users 
-      (emp_code, prefix_th, name_th, lastname_th, nickname_th, prefix_en, name_en, lastname_en, nickname_en, email, password_hash, role, position, profile_image) 
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      (username,emp_code, prefix_th, name_th, lastname_th, nickname_th, prefix_en, name_en, lastname_en, nickname_en, email, password_hash, role, position, profile_image) 
+      VALUES (?,?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
       await db.query(sql, [
+        username,
         emp_code,
         prefix_th,
         name_th,
@@ -139,6 +141,7 @@ router.put(
   async (req, res) => {
     const userId = req.params.id;
     const {
+      username,
       prefix_th,
       name_th,
       lastname_th,
@@ -164,6 +167,7 @@ router.put(
         }
       };
 
+      addField("username", username);
       addField("prefix_th", prefix_th);
       addField("name_th", name_th);
       addField("lastname_th", lastname_th);
