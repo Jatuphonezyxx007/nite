@@ -393,11 +393,16 @@ const Schedule = () => {
                             {user?.position || "Employee"}
                           </small>
                         </div>
-                        <div className="text-end">
+                        {/* <div className="text-end">
                           <span className="badge rounded-pill bg-light text-dark border">
                             {s.title}
                           </span>
-                        </div>
+                        </div> */}
+                      </div>
+                      <div className="mb-2 ps-1">
+                        <span className="badge rounded-pill bg-light text-dark border">
+                          {s.title}
+                        </span>
                       </div>
 
                       <div className="w-100 ps-1">
