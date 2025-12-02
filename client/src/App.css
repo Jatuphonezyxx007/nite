@@ -40,3 +40,13 @@
 .read-the-docs {
   color: #888;
 }
+
+html {
+  scroll-behavior: smooth; /* เลื่อนหน้าเว็บแบบนุ่มนวล */
+}
+
+/* ป้องกัน Scroll เด้งในบาง Browser */
+body {
+  width: 100%;
+  min-height: 100vh;
+}

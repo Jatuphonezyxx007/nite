@@ -1,34 +1,44 @@
 /* Modal Overlay (Backdrop) */
 .modern-modal-overlay {
-  position: fixed;
+  position: fixed; /* 📌 Key Fix: ตรึงกับหน้าจอเสมอ ไม่ว่าจะ Scroll ไปไหน */
   top: 0;
   left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(30, 42, 69, 0.75); /* สีธีมของคุณ */
-  backdrop-filter: blur(4px);
-  z-index: 1050;
+  width: 100vw; /* เต็มความกว้างจอ */
+  height: 100vh; /* เต็มความสูงจอ */
+  background-color: rgba(30, 42, 69, 0.6); /* สีธีมเข้มโปร่งแสง */
+  backdrop-filter: blur(4px); /* Blur ฉากหลัง */
+  z-index: 2000;
+
+  /* จัดกึ่งกลาง Modal */
   display: flex;
   align-items: center;
   justify-content: center;
+
   opacity: 0;
   animation: fadeIn 0.2s forwards;
+
+  /* ป้องกัน Scroll ทะลุที่ Overlay เอง */
+  overscroll-behavior: contain;
 }
 
 /* Modal Container */
 .modern-modal-container {
   background: white;
-  width: 100%;
-  max-width: 1100px; /* Default width (ปรับได้ผ่าน props) */
-  max-height: 90vh;
+  width: 95%; /* เผื่อ Mobile */
+  max-width: 1100px;
+  max-height: 90vh; /* สูงไม่เกิน 90% ของจอ */
+
   border-radius: 24px;
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+
   display: flex;
   flex-direction: column;
   overflow: hidden;
+
   transform: scale(0.95);
-  animation: slideUp 0.3s forwards cubic-bezier(0.16, 1, 0.3, 1);
+  animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   margin: 16px;
+  position: relative;
 }
 
 /* Header */
@@ -39,7 +49,18 @@
   justify-content: space-between;
   align-items: center;
   background-color: white;
-  flex-shrink: 0;
+  flex-shrink: 0; /* ห้ามหด */
+}
+
+.header-icon-box {
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(135deg, #1e2a45, #34495e);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 10px rgba(30, 42, 69, 0.2);
 }
 
 /* Close Button */
@@ -64,12 +85,17 @@
 
 /* Body Scrollable */
 .modern-modal-body {
-  overflow-y: auto;
+  overflow-y: auto; /* ให้ Scroll ได้เฉพาะส่วนนี้ */
   flex-grow: 1;
-  /* Custom Scrollbar */
+  padding: 0; /* padding จะไปอยู่ที่ content ข้างในแทน */
+
+  /* --- KEY FIX: ป้องกัน Scroll ทะลุ --- */
+  overscroll-behavior: contain;
 }
+
+/* Custom Scrollbar */
 .modern-modal-body::-webkit-scrollbar {
-  width: 6px;
+  width: 8px;
 }
 .modern-modal-body::-webkit-scrollbar-track {
   background: transparent;
@@ -77,6 +103,10 @@
 .modern-modal-body::-webkit-scrollbar-thumb {
   background-color: #cbd5e1;
   border-radius: 10px;
+  border: 2px solid white; /* ทำให้ดูมีระยะห่าง */
+}
+.modern-modal-body::-webkit-scrollbar-thumb:hover {
+  background-color: #94a3b8;
 }
 
 /* Animations */

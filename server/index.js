@@ -25,6 +25,7 @@ const userRoutes = require("./routes/users"); // <--- ✅ เพิ่มบร�
 const leaveRoutes = require("./routes/leaves");
 const scheduleRoutes = require("./routes/schedule");
 const shiftsRoutes = require("./routes/shifts");
+const adminScheduleRoutes = require("./routes/admin_schedule");
 
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
@@ -39,6 +40,7 @@ app.use("/api/schedule", scheduleRoutes);
 // ✅ แยก Group Routes: Admin ได้สิทธิ์เต็ม / User ได้สิทธิ์ดู
 app.use("/api/admin/shifts", shiftsRoutes);
 app.use("/api/user/shifts", shiftsRoutes);
+app.use("/api/admin/schedule", adminScheduleRoutes);
 
 // หมายเหตุ:
 // Frontend เรียก: /api/user/dashboard-stats

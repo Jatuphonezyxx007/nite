@@ -27,6 +27,7 @@ import Settings from "./pages/admin/Settings";
 import AttendanceOverView from "./pages/admin/AttendanceOverView";
 import ManageTime from "./pages/admin/ManageTime";
 import ManageShift from "./pages/admin/ManageShifts";
+import ManageLeaves from "./pages/admin/ManageLeaves";
 
 const token = localStorage.getItem("token");
 if (token) {
@@ -88,6 +89,7 @@ function App() {
               <Route path="shifts" element={<ManageShift />} />
             </Route>
             <Route path="settings" element={<Settings />} />
+            <Route path="manage-leaves" element={<ManageLeaves />} />
           </Route>
 
           {/* --- User Route --- */}

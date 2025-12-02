@@ -59,13 +59,13 @@ const Schedule = () => {
     setSelectedDate(targetDate);
   };
 
-  // --- Status Configuration ---
+  // --- Status Mapping (สำหรับ Detail Panel) ---
   const getStatusInfo = (status) => {
     switch (status) {
       case "ontime":
       case "present":
         return {
-          label: "มาปกติ",
+          label: "เข้างานปกติ",
           icon: "check_circle",
           class: "status-present",
         };
@@ -90,35 +90,41 @@ const Schedule = () => {
           class: "status-pending",
         };
       case "off":
-        return {
-          label: "วันหยุดประจำสัปดาห์",
-          icon: "weekend",
-          class: "status-pending",
-        };
+        return { label: "วันหยุด", icon: "weekend", class: "status-pending" };
       case "scheduled":
       default:
         return { label: "รอลงเวลา", icon: "schedule", class: "status-pending" };
     }
   };
 
-  // ดึงข้อมูลกะงานและวันหยุดของวันที่เลือก
+  // --- Helper: Get Status Color for Dot ---
+  const getStatusDotColor = (status) => {
+    switch (status) {
+      case "ontime":
+        return "#10b981"; // เขียว
+      case "late":
+        return "#f59e0b"; // ส้ม
+      case "absent":
+        return "#ef4444"; // แดง
+      case "working":
+        return "#3b82f6"; // ฟ้า (กำลังทำ)
+      default:
+        return null; // ไม่แสดงถ้ายังไม่ถึงเวลา (scheduled)
+    }
+  };
+
   const getSelectedDayData = () => {
     if (!selectedDate) return { shifts: [], holiday: null };
-
     const offset = selectedDate.getTimezoneOffset();
     const dateLocal = new Date(selectedDate.getTime() - offset * 60 * 1000);
     const dateStr = dateLocal.toISOString().split("T")[0];
 
-    // กรอง Work Shifts
     const shifts = scheduleData.filter(
       (s) => s.date === dateStr && s.type === "work"
     );
-
-    // หา Holiday หรือ Off Day
     const holiday = scheduleData.find(
       (s) => s.date === dateStr && (s.type === "holiday" || s.type === "off")
     );
-
     return { shifts, holiday };
   };
 
@@ -152,6 +158,10 @@ const Schedule = () => {
       const isSelected =
         selectedDate && selectedDate.toDateString() === dateObj.toDateString();
 
+      // Border Color Logic (ยังคงไว้สำหรับ Absent ทั้งวัน)
+      let boxClass = "";
+      if (dayShifts.some((s) => s.status === "absent")) boxClass = "absent";
+
       days.push(
         <div
           key={i}
@@ -160,6 +170,7 @@ const Schedule = () => {
             ${isWeekend ? "weekend" : ""} 
             ${isSelected ? "selected" : ""} 
             ${holiday?.type === "holiday" ? "holiday" : ""}
+            ${boxClass}
           `}
           onClick={() => handleDateClick(i)}
         >
@@ -175,7 +186,6 @@ const Schedule = () => {
             )}
           </div>
 
-          {/* Holiday / Off Label */}
           {holiday && (
             <div className="holiday-label" title={holiday.title}>
               <span
@@ -188,26 +198,42 @@ const Schedule = () => {
             </div>
           )}
 
-          {/* Shift Items */}
           <div className="d-flex flex-column gap-1 mt-1">
             {dayShifts.slice(0, 3).map((shift, idx) => {
-              // Map status for CSS class
-              let statusClass = "pending";
-              if (shift.status === "ontime") statusClass = "present";
-              else if (shift.status === "scheduled") statusClass = "pending";
-              else statusClass = shift.status; // late, absent, working
+              const statusColor = getStatusDotColor(shift.status);
 
               return (
-                <div
-                  key={idx}
-                  className="shift-item"
-                  title={`${shift.title} (${shift.shift})`}
-                >
-                  <span className={`status-dot-mini ${statusClass}`}></span>
-                  <span>{shift.title}</span>
+                <div key={idx} className="shift-item" title={shift.title}>
+                  <div
+                    className="d-flex align-items-center gap-1"
+                    style={{ width: "12px" }}
+                  >
+                    {/* Dot 1: Shift Color (บอกกะ) */}
+                    <span
+                      className="status-dot-mini"
+                      style={{ backgroundColor: shift.color || "#ccc" }}
+                    ></span>
+
+                    {/* Dot 2: Status Color (บอกสถานะ - ถ้ามี) */}
+                    {statusColor && (
+                      <span
+                        className="status-dot-mini"
+                        style={{
+                          backgroundColor: statusColor,
+                          borderRadius: "2px", // ทำให้เป็นสี่เหลี่ยมมนนิดๆ เพื่อแยกความต่าง
+                          width: "5px",
+                          height: "5px",
+                        }}
+                        title={shift.status}
+                      ></span>
+                    )}
+                  </div>
+
+                  <span className="text-truncate">{shift.title}</span>
                 </div>
               );
             })}
+
             {dayShifts.length > 3 && (
               <small
                 className="text-muted text-center"
@@ -224,26 +250,25 @@ const Schedule = () => {
   };
 
   const monthNames = [
-    "January",
-    "February",
-    "March",
-    "April",
-    "May",
-    "June",
-    "July",
-    "August",
-    "September",
-    "October",
-    "November",
-    "December",
+    "มกราคม",
+    "กุมภาพันธ์",
+    "มีนาคม",
+    "เมษายน",
+    "พฤษภาคม",
+    "มิถุนายน",
+    "กรกฎาคม",
+    "สิงหาคม",
+    "กันยายน",
+    "ตุลาคม",
+    "พฤศจิกายน",
+    "ธันวาคม",
   ];
-
   const { shifts: selectedShifts, holiday: selectedHoliday } =
     getSelectedDayData();
 
   return (
     <div className="container-fluid py-4 px-4 mt-4">
-      {/* Header */}
+      {/* ... (Header เหมือนเดิม) ... */}
       <div className="d-flex justify-content-between align-items-end mb-4 flex-wrap gap-3">
         <div>
           <h2 className="fw-bold mb-0 text-dark d-flex align-items-center gap-2">
@@ -253,44 +278,22 @@ const Schedule = () => {
             >
               calendar_month
             </span>
-            My Schedule
+            ตารางงานของฉัน
           </h2>
-          <p className="text-muted m-0">ตรวจสอบกะงานและการลงเวลาเข้า-ออก</p>
-        </div>
-
-        {/* Legend */}
-        <div className="d-flex gap-3 align-items-center bg-white px-3 py-2 rounded-pill shadow-sm border flex-wrap">
-          <div className="d-flex align-items-center gap-1">
-            <span className="status-dot-mini present"></span>
-            <small>ปกติ</small>
-          </div>
-          <div className="d-flex align-items-center gap-1">
-            <span className="status-dot-mini late"></span>
-            <small>สาย</small>
-          </div>
-          <div className="d-flex align-items-center gap-1">
-            <span className="status-dot-mini working"></span>
-            <small>กำลังทำ</small>
-          </div>
-          <div className="d-flex align-items-center gap-1">
-            <span className="status-dot-mini absent"></span>
-            <small>ขาด</small>
-          </div>
-          <div className="d-flex align-items-center gap-1">
-            <span className="status-dot-mini pending"></span>
-            <small>รอ</small>
-          </div>
+          <p className="text-muted m-0">ตรวจสอบกะงานและประวัติการลงเวลา</p>
         </div>
       </div>
 
       <div className="row g-4">
-        {/* Calendar */}
+        {/* Left: Calendar */}
         <div className="col-lg-8 col-xl-9">
           <div className="calendar-container h-100">
             <div className="calendar-header">
               <h4 className="fw-bold m-0 text-primary">
                 {monthNames[currentDate.getMonth()]}{" "}
-                <span className="text-dark">{currentDate.getFullYear()}</span>
+                <span className="text-dark">
+                  {currentDate.getFullYear() + 543}
+                </span>
               </h4>
               <div className="d-flex gap-2">
                 <button className="nav-btn" onClick={handlePrevMonth}>
@@ -316,28 +319,71 @@ const Schedule = () => {
 
             {loading ? (
               <div className="text-center py-5">
-                <div className="spinner-border text-primary" role="status">
-                  <span className="visually-hidden">Loading...</span>
-                </div>
+                <div
+                  className="spinner-border text-primary"
+                  role="status"
+                ></div>
               </div>
             ) : (
               <>
                 <div className="calendar-grid mb-2">
-                  {["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"].map(
-                    (day) => (
-                      <div key={day} className="weekday-header">
-                        {day}
-                      </div>
-                    )
-                  )}
+                  {["อา", "จ", "อ", "พ", "พฤ", "ศ", "ส"].map((day) => (
+                    <div key={day} className="weekday-header">
+                      {day}
+                    </div>
+                  ))}
                 </div>
                 <div className="calendar-grid">{renderCalendar()}</div>
+
+                {/* Legend อธิบายจุดสี */}
+                <div className="d-flex gap-3 mt-3 pt-3 border-top justify-content-center flex-wrap small text-muted">
+                  <div className="d-flex align-items-center gap-1">
+                    <span
+                      className="status-dot-mini"
+                      style={{
+                        backgroundColor: "#10b981",
+                        borderRadius: "2px",
+                      }}
+                    ></span>{" "}
+                    มาปกติ
+                  </div>
+                  <div className="d-flex align-items-center gap-1">
+                    <span
+                      className="status-dot-mini"
+                      style={{
+                        backgroundColor: "#f59e0b",
+                        borderRadius: "2px",
+                      }}
+                    ></span>{" "}
+                    สาย
+                  </div>
+                  <div className="d-flex align-items-center gap-1">
+                    <span
+                      className="status-dot-mini"
+                      style={{
+                        backgroundColor: "#ef4444",
+                        borderRadius: "2px",
+                      }}
+                    ></span>{" "}
+                    ขาด
+                  </div>
+                  <div className="d-flex align-items-center gap-1">
+                    <span
+                      className="status-dot-mini"
+                      style={{
+                        backgroundColor: "#3b82f6",
+                        borderRadius: "2px",
+                      }}
+                    ></span>{" "}
+                    กำลังทำ
+                  </div>
+                </div>
               </>
             )}
           </div>
         </div>
 
-        {/* Side Panel */}
+        {/* Right: Detail Panel (ส่วนนี้เหมือนเดิม) */}
         <div className="col-lg-4 col-xl-3">
           <div className="detail-panel">
             <h5 className="fw-bold mb-4 d-flex align-items-center gap-2 border-bottom pb-3">
@@ -353,7 +399,6 @@ const Schedule = () => {
                 : "รายละเอียด"}
             </h5>
 
-            {/* Holiday / Off Banner */}
             {selectedHoliday && (
               <div className="holiday-banner fade-in">
                 <span className="material-symbols-rounded d-block fs-1 mb-2">
@@ -364,21 +409,19 @@ const Schedule = () => {
                 <h5 className="fw-bold m-0">{selectedHoliday.title}</h5>
                 <small>
                   {selectedHoliday.type === "holiday"
-                    ? "วันหยุดราชการ"
-                    : "วันหยุดพักผ่อน"}
+                    ? "วันหยุดบริษัท"
+                    : "วันหยุดประจำสัปดาห์"}
                 </small>
               </div>
             )}
 
-            {/* Shift List */}
             {selectedShifts.length > 0 ? (
               <div
-                className="d-flex flex-column gap-2 overflow-auto"
+                className="d-flex flex-column gap-3 overflow-auto"
                 style={{ maxHeight: "600px" }}
               >
                 {selectedShifts.map((s, idx) => {
                   const statusInfo = getStatusInfo(s.status);
-
                   return (
                     <div key={idx} className="detail-row">
                       <div className="d-flex align-items-center w-100 mb-2">
@@ -387,26 +430,27 @@ const Schedule = () => {
                         </div>
                         <div className="flex-grow-1">
                           <h6 className="mb-0 fw-bold text-dark">
-                            {user?.name_th || "User"}
+                            {user?.name_th}
                           </h6>
-                          <small className="text-muted">
-                            {user?.position || "Employee"}
-                          </small>
+                          <small className="text-muted">{user?.position}</small>
                         </div>
-                        {/* <div className="text-end">
-                          <span className="badge rounded-pill bg-light text-dark border">
-                            {s.title}
-                          </span>
-                        </div> */}
                       </div>
+
                       <div className="mb-2 ps-1">
-                        <span className="badge rounded-pill bg-light text-dark border">
+                        <span
+                          className="badge rounded-pill border"
+                          style={{
+                            backgroundColor: s.color || "#f8f9fa",
+                            color: "#fff",
+                            borderColor: s.color,
+                          }}
+                        >
                           {s.title}
                         </span>
                       </div>
 
                       <div className="w-100 ps-1">
-                        <div className="d-flex justify-content-between align-items-center mb-2">
+                        <div className="d-flex justify-content-between align-items-center mb-3">
                           <small className="text-muted d-flex align-items-center gap-1">
                             <span
                               className="material-symbols-rounded"
@@ -429,38 +473,67 @@ const Schedule = () => {
                           </div>
                         </div>
 
-                        {/* Show Check-in/out only if action taken */}
                         {(s.status === "ontime" ||
                           s.status === "late" ||
                           s.status === "working") && (
-                          <div className="attendance-info">
-                            <div className="time-pill">
-                              <span
-                                className="material-symbols-rounded text-success"
-                                style={{ fontSize: "16px" }}
-                              >
-                                login
-                              </span>
-                              IN: {s.checkIn || "-"}
-                            </div>
-                            {s.checkOut && s.checkOut !== "-" && (
-                              <div className="time-pill">
-                                <span
-                                  className="material-symbols-rounded text-danger"
-                                  style={{ fontSize: "16px" }}
-                                >
-                                  logout
+                          <div className="attendance-info-box">
+                            <div className="time-entry mb-2">
+                              <div className="d-flex justify-content-between align-items-center mb-1">
+                                <span className="text-success fw-bold small">
+                                  <i className="bi bi-box-arrow-in-right me-1"></i>
+                                  เข้างาน
                                 </span>
-                                OUT: {s.checkOut}
+                                <span className="fw-bold text-dark">
+                                  {s.checkIn || "-"}
+                                </span>
                               </div>
-                            )}
-                            {(!s.checkOut || s.checkOut === "-") &&
-                              s.status === "working" && (
-                                <div className="time-pill border-0 bg-transparent text-primary">
-                                  <span className="spinner-grow spinner-grow-sm me-1"></span>{" "}
-                                  On Duty
+                              {s.checkInImage && (
+                                <div className="img-thumbnail-wrapper">
+                                  <img
+                                    src={`${apiUrl}/uploads/${s.checkInImage}`}
+                                    alt="Check In"
+                                    onClick={() =>
+                                      window.open(
+                                        `${apiUrl}/uploads/${s.checkInImage}`
+                                      )
+                                    }
+                                  />
                                 </div>
                               )}
+                            </div>
+
+                            {s.checkOut && s.checkOut !== "-" && (
+                              <div className="time-entry">
+                                <div className="d-flex justify-content-between align-items-center mb-1">
+                                  <span className="text-danger fw-bold small">
+                                    <i className="bi bi-box-arrow-right me-1"></i>
+                                    ออกงาน
+                                  </span>
+                                  <span className="fw-bold text-dark">
+                                    {s.checkOut}
+                                  </span>
+                                </div>
+                                {s.checkOutImage && (
+                                  <div className="img-thumbnail-wrapper">
+                                    <img
+                                      src={`${apiUrl}/uploads/${s.checkOutImage}`}
+                                      alt="Check Out"
+                                      onClick={() =>
+                                        window.open(
+                                          `${apiUrl}/uploads/${s.checkOutImage}`
+                                        )
+                                      }
+                                    />
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        {s.status === "absent" && (
+                          <div className="alert alert-danger py-2 px-3 small m-0 text-center">
+                            ไม่พบข้อมูลการลงเวลา
                           </div>
                         )}
                       </div>
@@ -477,7 +550,7 @@ const Schedule = () => {
                   >
                     event_busy
                   </span>
-                  <p className="mt-2">ไม่มีตารางงานในวันนี้</p>
+                  <p className="mt-2">ไม่มีตารางงาน</p>
                 </div>
               )
             )}

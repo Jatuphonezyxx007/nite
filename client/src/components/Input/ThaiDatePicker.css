@@ -1,0 +1,261 @@
+@import url("https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600&display=swap");
+
+.thai-date-container {
+  position: relative;
+  width: 100%;
+  font-family: "Kanit", sans-serif;
+}
+
+/* --- Trigger Input --- */
+.thai-date-display {
+  width: 100%;
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  background-color: #ffffff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  user-select: none;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.thai-date-display:hover {
+  border-color: #cbd5e1;
+  background-color: #f8fafc;
+}
+
+.thai-date-display.has-value {
+  border-color: #bfdbfe;
+  background-color: #eff6ff;
+  color: #1e293b;
+}
+
+.thai-date-text {
+  font-size: 0.95rem;
+  color: #334155;
+  font-weight: 500;
+}
+
+.thai-date-placeholder {
+  color: #94a3b8;
+  font-weight: 400;
+}
+
+.date-icon {
+  font-size: 1.2rem;
+  color: #94a3b8;
+  margin-right: 8px;
+}
+.has-value .date-icon {
+  color: #3b82f6;
+}
+
+.dropdown-icon {
+  color: #94a3b8;
+  transition: transform 0.2s;
+}
+.dropdown-icon.rotate {
+  transform: rotate(180deg);
+}
+
+/* --- Popup Calendar (Portal) --- */
+.tdp-popup {
+  width: 340px;
+  background: white;
+  border-radius: 24px;
+  box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.3),
+    0 10px 20px -5px rgba(0, 0, 0, 0.1); /* เงาเข้มขึ้นเพื่อให้ดูลอยเด่น */
+  border: 1px solid #e2e8f0;
+  z-index: 99999; /* สูงสุดๆ */
+  padding: 20px;
+  font-family: "Kanit", sans-serif;
+}
+
+/* Animation for Bottom Placement */
+.tdp-popup.placement-bottom {
+  transform-origin: top left;
+  animation: tdpPopDown 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Animation for Top Placement */
+.tdp-popup.placement-top {
+  transform-origin: bottom left;
+  transform: translateY(-100%); /* ดันขึ้นไปข้างบน */
+  animation: tdpPopUp 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes tdpPopDown {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes tdpPopUp {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(calc(-100% + 10px));
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(-100%);
+  }
+}
+
+/* Header */
+.tdp-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.tdp-title {
+  display: flex;
+  gap: 6px;
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: #1e293b;
+}
+
+.tdp-year {
+  color: #3b82f6;
+}
+
+.tdp-nav-btn {
+  background: white;
+  border: 1px solid #f1f5f9;
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #64748b;
+  transition: all 0.2s;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+}
+
+.tdp-nav-btn:hover {
+  background: #f8fafc;
+  color: #3b82f6;
+  border-color: #e2e8f0;
+  transform: translateY(-1px);
+}
+
+.tdp-nav-btn:active {
+  transform: translateY(0);
+}
+
+/* Weekdays */
+.tdp-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  margin-bottom: 12px;
+}
+
+.tdp-weekday {
+  text-align: center;
+  font-size: 0.85rem;
+  color: #94a3b8;
+  font-weight: 600;
+}
+
+.tdp-weekday.weekend {
+  color: #ef4444;
+}
+
+/* Grid Days */
+.tdp-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  row-gap: 8px;
+}
+
+.tdp-day {
+  height: 40px;
+  width: 40px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.95rem;
+  border-radius: 50%;
+  cursor: pointer;
+  color: #334155;
+  transition: all 0.2s;
+  position: relative;
+}
+
+.tdp-day:hover:not(.empty):not(.selected) {
+  background-color: #f1f5f9;
+  color: #3b82f6;
+}
+
+.tdp-day.today {
+  color: #3b82f6;
+  font-weight: 700;
+  border: 2px solid #eff6ff;
+}
+
+.tdp-day.selected {
+  background-color: #3b82f6;
+  color: white;
+  box-shadow: 0 4px 10px rgba(59, 130, 246, 0.4);
+  font-weight: 600;
+}
+
+.tdp-day.selected:hover {
+  background-color: #2563eb;
+  transform: scale(1.1);
+}
+
+.tdp-day.empty {
+  cursor: default;
+}
+
+/* Footer */
+.tdp-footer {
+  border-top: 1px solid #f1f5f9;
+  margin-top: 16px;
+  padding-top: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.tdp-cancel-btn {
+  background: none;
+  border: none;
+  color: #94a3b8;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+.tdp-cancel-btn:hover {
+  color: #64748b;
+}
+
+.tdp-today-btn {
+  border: none;
+  background: #eff6ff;
+  color: #3b82f6;
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+  padding: 8px 16px;
+  border-radius: 20px;
+  transition: all 0.2s;
+}
+
+.tdp-today-btn:hover {
+  background: #dbeafe;
+  transform: translateY(-1px);
+}

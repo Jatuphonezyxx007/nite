@@ -1,4 +1,5 @@
 import React, { useEffect } from "react";
+import { createPortal } from "react-dom"; // 1. เพิ่ม import นี้
 import "./Modal.css";
 
 const ModernModal = ({
@@ -9,44 +10,40 @@ const ModernModal = ({
   icon,
   maxWidth = "1100px",
 }) => {
-  // ป้องกันการ Scroll ที่ Body หลักเมื่อ Modal เปิด
   useEffect(() => {
     if (isOpen) {
+      const scrollbarWidth =
+        window.innerWidth - document.documentElement.clientWidth;
+      document.body.style.paddingRight = `${scrollbarWidth}px`;
       document.body.style.overflow = "hidden";
     } else {
-      document.body.style.overflow = "unset";
+      const timer = setTimeout(() => {
+        document.body.style.paddingRight = "0px";
+        document.body.style.overflow = "unset";
+      }, 0);
+      return () => clearTimeout(timer);
     }
     return () => {
+      document.body.style.paddingRight = "0px";
       document.body.style.overflow = "unset";
     };
   }, [isOpen]);
 
   if (!isOpen) return null;
 
-  return (
+  // 2. ใช้ createPortal ห่อ JSX ทั้งหมด แล้วส่งไปที่ document.body
+  return createPortal(
     <div className="modern-modal-overlay" onClick={onClose}>
       <div
         className="modern-modal-container"
         style={{ maxWidth }}
-        onClick={(e) => e.stopPropagation()} // คลิกข้างในไม่ปิด Modal
+        onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <div className="modern-modal-header">
           <div className="d-flex align-items-center gap-3">
             {icon && (
-              <div
-                className="header-icon-box"
-                style={{
-                  width: "48px",
-                  height: "48px",
-                  background: "linear-gradient(135deg, #1e2a45, #34495e)",
-                  borderRadius: "12px",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  boxShadow: "0 4px 10px rgba(30, 42, 69, 0.2)",
-                }}
-              >
+              <div className="header-icon-box">
                 <span className="material-symbols-rounded fs-4 text-white">
                   {icon}
                 </span>
@@ -66,7 +63,8 @@ const ModernModal = ({
         {/* Body Content */}
         <div className="modern-modal-body">{children}</div>
       </div>
-    </div>
+    </div>,
+    document.body // 3. ปลายทางที่จะให้ Modal ไปโผล่ (นอกสุดของเว็บ)
   );
 };
 
