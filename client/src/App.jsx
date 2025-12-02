@@ -87,9 +87,9 @@ function App() {
               <Route path="overview" element={<AttendanceOverView />} />
               <Route path="manage" element={<ManageTime />} />
               <Route path="shifts" element={<ManageShift />} />
+              <Route path="manage-leaves" element={<ManageLeaves />} />
             </Route>
             <Route path="settings" element={<Settings />} />
-            <Route path="manage-leaves" element={<ManageLeaves />} />
           </Route>
 
           {/* --- User Route --- */}

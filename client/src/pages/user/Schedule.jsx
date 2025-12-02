@@ -59,6 +59,49 @@ const Schedule = () => {
     setSelectedDate(targetDate);
   };
 
+  // --- Helpers for Display ---
+  const getStatusDisplay = (status) => {
+    switch (status) {
+      case "ontime":
+        return {
+          text: "ปกติ",
+          color: "#10b981",
+          bg: "#d1fae5",
+          icon: "check_circle",
+        };
+      case "present":
+        return {
+          text: "ปกติ",
+          color: "#10b981",
+          bg: "#d1fae5",
+          icon: "check_circle",
+        };
+      case "late":
+        return {
+          text: "สาย",
+          color: "#b45309",
+          bg: "#ffedd5",
+          icon: "warning",
+        };
+      case "working":
+        return {
+          text: "กำลังทำ",
+          color: "#0369a1",
+          bg: "#e0f2fe",
+          icon: "timelapse",
+        };
+      case "absent":
+        return {
+          text: "ขาดงาน",
+          color: "#b91c1c",
+          bg: "#fee2e2",
+          icon: "cancel",
+        };
+      default:
+        return null;
+    }
+  };
+
   // --- Status Mapping (สำหรับ Detail Panel) ---
   const getStatusInfo = (status) => {
     switch (status) {
@@ -91,41 +134,35 @@ const Schedule = () => {
         };
       case "off":
         return { label: "วันหยุด", icon: "weekend", class: "status-pending" };
+      case "leave":
+        return {
+          label: "ลางาน",
+          icon: "flight_takeoff",
+          class: "status-pending",
+        }; // เพิ่ม case leave
       case "scheduled":
       default:
         return { label: "รอลงเวลา", icon: "schedule", class: "status-pending" };
     }
   };
 
-  // --- Helper: Get Status Color for Dot ---
-  const getStatusDotColor = (status) => {
-    switch (status) {
-      case "ontime":
-        return "#10b981"; // เขียว
-      case "late":
-        return "#f59e0b"; // ส้ม
-      case "absent":
-        return "#ef4444"; // แดง
-      case "working":
-        return "#3b82f6"; // ฟ้า (กำลังทำ)
-      default:
-        return null; // ไม่แสดงถ้ายังไม่ถึงเวลา (scheduled)
-    }
-  };
-
   const getSelectedDayData = () => {
-    if (!selectedDate) return { shifts: [], holiday: null };
+    if (!selectedDate) return { shifts: [], holiday: null, leaves: [] };
     const offset = selectedDate.getTimezoneOffset();
     const dateLocal = new Date(selectedDate.getTime() - offset * 60 * 1000);
     const dateStr = dateLocal.toISOString().split("T")[0];
 
-    const shifts = scheduleData.filter(
-      (s) => s.date === dateStr && s.type === "work"
+    const dayData = scheduleData.filter((s) => s.date === dateStr);
+
+    const shifts = dayData.filter((s) => s.type === "work");
+    const leaves = dayData.filter((s) => s.type === "leave");
+    const holiday = dayData.find(
+      (s) => s.type === "holiday" || s.type === "off"
     );
-    const holiday = scheduleData.find(
-      (s) => s.date === dateStr && (s.type === "holiday" || s.type === "off")
-    );
-    return { shifts, holiday };
+
+    // รวม leaves เข้าไปใน shifts เพื่อแสดงใน Detail Panel หรือแยกก็ได้
+    // ในที่นี้ขอแยกส่งออกไปเพื่อให้จัดการง่าย
+    return { shifts, holiday, leaves };
   };
 
   const renderCalendar = () => {
@@ -147,8 +184,10 @@ const Schedule = () => {
       const dateLocal = new Date(dateObj.getTime() - offset * 60 * 1000);
       const dateStr = dateLocal.toISOString().split("T")[0];
 
+      // Filter Data
       const dayData = scheduleData.filter((s) => s.date === dateStr);
       const dayShifts = dayData.filter((s) => s.type === "work");
+      const dayLeaves = dayData.filter((s) => s.type === "leave");
       const holiday = dayData.find(
         (s) => s.type === "holiday" || s.type === "off"
       );
@@ -158,7 +197,7 @@ const Schedule = () => {
       const isSelected =
         selectedDate && selectedDate.toDateString() === dateObj.toDateString();
 
-      // Border Color Logic (ยังคงไว้สำหรับ Absent ทั้งวัน)
+      // Border Color Logic
       let boxClass = "";
       if (dayShifts.some((s) => s.status === "absent")) boxClass = "absent";
 
@@ -174,18 +213,20 @@ const Schedule = () => {
           `}
           onClick={() => handleDateClick(i)}
         >
-          <div className="d-flex justify-content-between align-items-center">
+          {/* Header: Date Number */}
+          <div className="d-flex justify-content-between align-items-center mb-1">
             <span className="day-number">{i}</span>
-            {dayShifts.length > 0 && (
+            {(dayShifts.length > 0 || dayLeaves.length > 0) && (
               <span
-                className="badge rounded-pill bg-secondary text-white border border-white"
-                style={{ fontSize: "0.6rem" }}
+                className="badge rounded-pill bg-light text-secondary border"
+                style={{ fontSize: "0.55rem" }}
               >
-                {dayShifts.length}
+                {dayShifts.length + dayLeaves.length}
               </span>
             )}
           </div>
 
+          {/* 1. Holiday Label */}
           {holiday && (
             <div className="holiday-label" title={holiday.title}>
               <span
@@ -198,48 +239,94 @@ const Schedule = () => {
             </div>
           )}
 
-          <div className="d-flex flex-column gap-1 mt-1">
-            {dayShifts.slice(0, 3).map((shift, idx) => {
-              const statusColor = getStatusDotColor(shift.status);
+          {/* 2. Leaves (แสดงก่อนงาน) */}
+          {dayLeaves.map((leave, idx) => (
+            <div
+              key={`leave-${idx}`}
+              className="mb-1 px-1 rounded text-white text-truncate d-flex align-items-center"
+              style={{
+                backgroundColor: leave.color || "#a855f7",
+                fontSize: "0.65rem",
+                paddingTop: "2px",
+                paddingBottom: "2px",
+              }}
+              title={leave.title}
+            >
+              <span
+                className="material-symbols-rounded me-1"
+                style={{ fontSize: "10px" }}
+              >
+                flight_takeoff
+              </span>
+              {leave.title}
+            </div>
+          ))}
+
+          {/* 3. Shifts (Work) */}
+          <div className="d-flex flex-column gap-1">
+            {dayShifts.slice(0, 2).map((shift, idx) => {
+              const statusMeta = getStatusDisplay(shift.status);
 
               return (
-                <div key={idx} className="shift-item" title={shift.title}>
-                  <div
-                    className="d-flex align-items-center gap-1"
-                    style={{ width: "12px" }}
-                  >
-                    {/* Dot 1: Shift Color (บอกกะ) */}
+                <div
+                  key={`shift-${idx}`}
+                  className="p-1 rounded position-relative"
+                  style={{
+                    backgroundColor: "#f8f9fa",
+                    border: "1px solid #e9ecef",
+                  }}
+                >
+                  {/* Pill 1: Shift Info (แผนงาน) */}
+                  <div className="d-flex align-items-center gap-1">
                     <span
-                      className="status-dot-mini"
-                      style={{ backgroundColor: shift.color || "#ccc" }}
+                      style={{
+                        width: "6px",
+                        height: "6px",
+                        borderRadius: "50%",
+                        backgroundColor: shift.color || "#ccc",
+                        flexShrink: 0,
+                      }}
                     ></span>
-
-                    {/* Dot 2: Status Color (บอกสถานะ - ถ้ามี) */}
-                    {statusColor && (
-                      <span
-                        className="status-dot-mini"
-                        style={{
-                          backgroundColor: statusColor,
-                          borderRadius: "2px", // ทำให้เป็นสี่เหลี่ยมมนนิดๆ เพื่อแยกความต่าง
-                          width: "5px",
-                          height: "5px",
-                        }}
-                        title={shift.status}
-                      ></span>
-                    )}
+                    <span
+                      className="text-truncate fw-bold text-dark"
+                      style={{ fontSize: "0.65rem" }}
+                    >
+                      {shift.title}
+                    </span>
                   </div>
 
-                  <span className="text-truncate">{shift.title}</span>
+                  {/* Pill 2: Attendance Status (ผลลัพธ์) - แสดงเมื่อมีสถานะแล้ว */}
+                  {statusMeta && (
+                    <div
+                      className="mt-1 rounded px-1 d-flex align-items-center justify-content-center gap-1"
+                      style={{
+                        backgroundColor: statusMeta.bg,
+                        color: statusMeta.color,
+                        border: `1px solid ${statusMeta.color}30`, // 30 opacity
+                        fontSize: "0.6rem",
+                        fontWeight: 600,
+                      }}
+                    >
+                      <span
+                        className="material-symbols-rounded"
+                        style={{ fontSize: "10px" }}
+                      >
+                        {statusMeta.icon}
+                      </span>
+                      {statusMeta.text}
+                    </div>
+                  )}
                 </div>
               );
             })}
 
-            {dayShifts.length > 3 && (
+            {/* ถ้ามีรายการเกิน 2 (รวม leave และ shift) ให้แสดง +More */}
+            {dayShifts.length + dayLeaves.length > 3 && (
               <small
-                className="text-muted text-center"
-                style={{ fontSize: "0.65rem" }}
+                className="text-muted text-center d-block"
+                style={{ fontSize: "0.6rem", marginTop: "-2px" }}
               >
-                +{dayShifts.length - 3}
+                +{dayShifts.length + dayLeaves.length - 2} รายการ
               </small>
             )}
           </div>
@@ -263,12 +350,21 @@ const Schedule = () => {
     "พฤศจิกายน",
     "ธันวาคม",
   ];
-  const { shifts: selectedShifts, holiday: selectedHoliday } =
-    getSelectedDayData();
+
+  const {
+    shifts: selectedShifts,
+    holiday: selectedHoliday,
+    leaves: selectedLeaves,
+  } = getSelectedDayData();
+
+  // รวมรายการทั้งหมดเพื่อแสดงใน Detail Panel
+  const allDetailItems = [
+    ...selectedLeaves.map((l) => ({ ...l, isLeave: true })),
+    ...selectedShifts.map((s) => ({ ...s, isLeave: false })),
+  ];
 
   return (
     <div className="container-fluid py-4 px-4 mt-4">
-      {/* ... (Header เหมือนเดิม) ... */}
       <div className="d-flex justify-content-between align-items-end mb-4 flex-wrap gap-3">
         <div>
           <h2 className="fw-bold mb-0 text-dark d-flex align-items-center gap-2">
@@ -280,7 +376,9 @@ const Schedule = () => {
             </span>
             ตารางงานของฉัน
           </h2>
-          <p className="text-muted m-0">ตรวจสอบกะงานและประวัติการลงเวลา</p>
+          <p className="text-muted m-0">
+            ตรวจสอบกะงาน, วันลา และประวัติการลงเวลา
+          </p>
         </div>
       </div>
 
@@ -335,47 +433,52 @@ const Schedule = () => {
                 </div>
                 <div className="calendar-grid">{renderCalendar()}</div>
 
-                {/* Legend อธิบายจุดสี */}
+                {/* Legend Updated */}
                 <div className="d-flex gap-3 mt-3 pt-3 border-top justify-content-center flex-wrap small text-muted">
                   <div className="d-flex align-items-center gap-1">
                     <span
-                      className="status-dot-mini"
-                      style={{
-                        backgroundColor: "#10b981",
-                        borderRadius: "2px",
-                      }}
-                    ></span>{" "}
+                      className="material-symbols-rounded text-success"
+                      style={{ fontSize: "16px" }}
+                    >
+                      check_circle
+                    </span>{" "}
                     มาปกติ
                   </div>
                   <div className="d-flex align-items-center gap-1">
                     <span
-                      className="status-dot-mini"
-                      style={{
-                        backgroundColor: "#f59e0b",
-                        borderRadius: "2px",
-                      }}
-                    ></span>{" "}
+                      className="material-symbols-rounded text-warning"
+                      style={{ fontSize: "16px" }}
+                    >
+                      warning
+                    </span>{" "}
                     สาย
                   </div>
                   <div className="d-flex align-items-center gap-1">
                     <span
-                      className="status-dot-mini"
-                      style={{
-                        backgroundColor: "#ef4444",
-                        borderRadius: "2px",
-                      }}
-                    ></span>{" "}
+                      className="material-symbols-rounded text-danger"
+                      style={{ fontSize: "16px" }}
+                    >
+                      cancel
+                    </span>{" "}
                     ขาด
                   </div>
                   <div className="d-flex align-items-center gap-1">
                     <span
-                      className="status-dot-mini"
-                      style={{
-                        backgroundColor: "#3b82f6",
-                        borderRadius: "2px",
-                      }}
-                    ></span>{" "}
+                      className="material-symbols-rounded text-info"
+                      style={{ fontSize: "16px" }}
+                    >
+                      timelapse
+                    </span>{" "}
                     กำลังทำ
+                  </div>
+                  <div className="d-flex align-items-center gap-1">
+                    <span
+                      className="material-symbols-rounded"
+                      style={{ fontSize: "16px", color: "#a855f7" }}
+                    >
+                      flight_takeoff
+                    </span>{" "}
+                    ลางาน
                   </div>
                 </div>
               </>
@@ -383,7 +486,7 @@ const Schedule = () => {
           </div>
         </div>
 
-        {/* Right: Detail Panel (ส่วนนี้เหมือนเดิม) */}
+        {/* Right: Detail Panel */}
         <div className="col-lg-4 col-xl-3">
           <div className="detail-panel">
             <h5 className="fw-bold mb-4 d-flex align-items-center gap-2 border-bottom pb-3">
@@ -415,15 +518,49 @@ const Schedule = () => {
               </div>
             )}
 
-            {selectedShifts.length > 0 ? (
+            {allDetailItems.length > 0 ? (
               <div
                 className="d-flex flex-column gap-3 overflow-auto"
                 style={{ maxHeight: "600px" }}
               >
-                {selectedShifts.map((s, idx) => {
-                  const statusInfo = getStatusInfo(s.status);
+                {allDetailItems.map((item, idx) => {
+                  const statusInfo = getStatusInfo(item.status);
+
+                  // Detail for Leaves
+                  if (item.isLeave) {
+                    return (
+                      <div
+                        key={`d-leave-${idx}`}
+                        className="detail-row"
+                        style={{ borderLeft: `4px solid ${item.color}` }}
+                      >
+                        <div className="d-flex justify-content-between align-items-start">
+                          <div>
+                            <span
+                              className="badge mb-2"
+                              style={{ backgroundColor: item.color }}
+                            >
+                              {item.title}
+                            </span>
+                            <h6 className="mb-0 fw-bold text-dark">
+                              {user?.name_th}
+                            </h6>
+                            <small className="text-muted">ขออนุมัติลา</small>
+                          </div>
+                          <span
+                            className="material-symbols-rounded text-muted opacity-25"
+                            style={{ fontSize: "32px" }}
+                          >
+                            flight_takeoff
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  }
+
+                  // Detail for Shifts
                   return (
-                    <div key={idx} className="detail-row">
+                    <div key={`d-shift-${idx}`} className="detail-row">
                       <div className="d-flex align-items-center w-100 mb-2">
                         <div className="user-avatar">
                           {user?.name_th ? user.name_th.charAt(0) : "U"}
@@ -440,12 +577,12 @@ const Schedule = () => {
                         <span
                           className="badge rounded-pill border"
                           style={{
-                            backgroundColor: s.color || "#f8f9fa",
+                            backgroundColor: item.color || "#f8f9fa",
                             color: "#fff",
-                            borderColor: s.color,
+                            borderColor: item.color,
                           }}
                         >
-                          {s.title}
+                          {item.title}
                         </span>
                       </div>
 
@@ -458,7 +595,7 @@ const Schedule = () => {
                             >
                               schedule
                             </span>
-                            {s.shift}
+                            {item.shift}
                           </small>
                           <div
                             className={`status-badge-lg ${statusInfo.class}`}
@@ -473,9 +610,9 @@ const Schedule = () => {
                           </div>
                         </div>
 
-                        {(s.status === "ontime" ||
-                          s.status === "late" ||
-                          s.status === "working") && (
+                        {(item.status === "ontime" ||
+                          item.status === "late" ||
+                          item.status === "working") && (
                           <div className="attendance-info-box">
                             <div className="time-entry mb-2">
                               <div className="d-flex justify-content-between align-items-center mb-1">
@@ -484,17 +621,17 @@ const Schedule = () => {
                                   เข้างาน
                                 </span>
                                 <span className="fw-bold text-dark">
-                                  {s.checkIn || "-"}
+                                  {item.checkIn || "-"}
                                 </span>
                               </div>
-                              {s.checkInImage && (
+                              {item.checkInImage && (
                                 <div className="img-thumbnail-wrapper">
                                   <img
-                                    src={`${apiUrl}/uploads/${s.checkInImage}`}
+                                    src={`${apiUrl}/uploads/${item.checkInImage}`}
                                     alt="Check In"
                                     onClick={() =>
                                       window.open(
-                                        `${apiUrl}/uploads/${s.checkInImage}`
+                                        `${apiUrl}/uploads/${item.checkInImage}`
                                       )
                                     }
                                   />
@@ -502,7 +639,7 @@ const Schedule = () => {
                               )}
                             </div>
 
-                            {s.checkOut && s.checkOut !== "-" && (
+                            {item.checkOut && item.checkOut !== "-" && (
                               <div className="time-entry">
                                 <div className="d-flex justify-content-between align-items-center mb-1">
                                   <span className="text-danger fw-bold small">
@@ -510,17 +647,17 @@ const Schedule = () => {
                                     ออกงาน
                                   </span>
                                   <span className="fw-bold text-dark">
-                                    {s.checkOut}
+                                    {item.checkOut}
                                   </span>
                                 </div>
-                                {s.checkOutImage && (
+                                {item.checkOutImage && (
                                   <div className="img-thumbnail-wrapper">
                                     <img
-                                      src={`${apiUrl}/uploads/${s.checkOutImage}`}
+                                      src={`${apiUrl}/uploads/${item.checkOutImage}`}
                                       alt="Check Out"
                                       onClick={() =>
                                         window.open(
-                                          `${apiUrl}/uploads/${s.checkOutImage}`
+                                          `${apiUrl}/uploads/${item.checkOutImage}`
                                         )
                                       }
                                     />
@@ -531,7 +668,7 @@ const Schedule = () => {
                           </div>
                         )}
 
-                        {s.status === "absent" && (
+                        {item.status === "absent" && (
                           <div className="alert alert-danger py-2 px-3 small m-0 text-center">
                             ไม่พบข้อมูลการลงเวลา
                           </div>

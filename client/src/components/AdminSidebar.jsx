@@ -24,13 +24,14 @@ const AdminSidebar = () => {
     { path: "/admin/dashboard", label: "Dashboard", icon: "grid_view" },
     { path: "/admin/users", label: "พนักงานทั้งหมด", icon: "group" },
     {
-      label: "เวลาเข้างาน",
-      icon: "schedule",
+      label: "การจัดการ",
+      icon: "check_circle",
       id: "attendance",
       subItems: [
         { path: "/admin/attendance/overview", label: "ภาพรวมเวลาเข้างาน" },
         { path: "/admin/attendance/manage", label: "จัดการเวลาพนักงาน" },
         { path: "/admin/attendance/shifts", label: "กะการเข้างาน" },
+        { path: "/admin/attendance/manage-leaves", label: "ใบลา" },
       ],
     },
     { path: "/admin/reports", label: "รายงานสรุป", icon: "description" },

@@ -533,7 +533,7 @@ function ManageTime() {
           />
           <div>
             <div className="fw-bold text-dark" style={{ fontSize: "0.9rem" }}>
-              {emp.name_th}
+              {emp.name_th} {emp.lastname_th}
             </div>
             <div className="small text-muted">{emp.position || "-"}</div>
           </div>

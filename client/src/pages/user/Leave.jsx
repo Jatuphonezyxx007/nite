@@ -1,26 +1,25 @@
 import React, { useState, useEffect } from "react";
 import Swal from "sweetalert2";
-import DatePicker, { registerLocale } from "react-datepicker";
-import "react-datepicker/dist/react-datepicker.css";
-import th from "date-fns/locale/th";
 import axios from "axios";
 import "./Leave.css";
 
-registerLocale("th", th);
+// Import Components
+import ThaiDatePicker from "../../components/Input/ThaiDatePicker"; //
+import ModernModal from "../../components/Modal";
+import ModernDropdown from "../../components/DropDown"; // ปรับ path ตามจริง
 
 const Leave = () => {
   const apiUrl = import.meta.env.VITE_API_URL;
   const token = localStorage.getItem("token");
   const config = { headers: { Authorization: `Bearer ${token}` } };
 
-  // --- State ---
+  // --- Main State ---
   const [formData, setFormData] = useState({
     leaveTypeId: "",
-    otherTypeDetail: "",
-    startDate: null,
-    endDate: null,
-    startTime: null,
-    endTime: null,
+    startDate: "",
+    endDate: "",
+    startTime: "09:00",
+    endTime: "18:00",
     reason: "",
     file: null,
   });
@@ -28,21 +27,16 @@ const Leave = () => {
   const [isFullDay, setIsFullDay] = useState(true);
   const [durationStr, setDurationStr] = useState("");
 
-  // Data from API
+  // Data State
   const [leaveTypes, setLeaveTypes] = useState([]);
   const [leaveStats, setLeaveStats] = useState([]);
   const [history, setHistory] = useState([]);
 
-  // --- Modal & Filter State ---
+  // --- Modal & Search State ---
   const [showHistoryModal, setShowHistoryModal] = useState(false);
-  const [selectedHistoryItem, setSelectedHistoryItem] = useState(null);
-
-  // Filter States
-  const [filterType, setFilterType] = useState("all"); // เก็บ ID ของประเภทลา (หรือ 'all')
-  const [filterStatus, setFilterStatus] = useState("all"); // all, approved, pending, rejected
   const [searchTerm, setSearchTerm] = useState("");
+  const [filterType, setFilterType] = useState("all"); // สำหรับ Dropdown Filter
 
-  // --- 1. Fetch Data on Load ---
   useEffect(() => {
     fetchSummary();
     fetchHistory();
@@ -79,26 +73,17 @@ const Leave = () => {
     }));
   };
 
-  const handleDateChange = (key, date) => {
+  const handleDateChange = (key, dateStr) => {
     setFormData((prev) => {
-      const newData = { ...prev, [key]: date };
-      if (key === "startDate" && !newData.endDate) {
-        newData.endDate = date;
+      const newData = { ...prev, [key]: dateStr };
+      if (key === "startDate" && !prev.endDate) {
+        newData.endDate = dateStr;
       }
       return newData;
     });
   };
 
-  const handleCloseModal = () => {
-    setShowHistoryModal(false);
-    setSelectedHistoryItem(null);
-    // Reset Filters when close (Optional)
-    // setFilterType("all");
-    // setFilterStatus("all");
-    // setSearchTerm("");
-  };
-
-  // --- Logic คำนวณเวลา ---
+  // --- Duration Logic ---
   useEffect(() => {
     const { startDate, endDate, startTime, endTime } = formData;
     if (!startDate || !endDate) {
@@ -106,44 +91,31 @@ const Leave = () => {
       return;
     }
 
-    const sDate = new Date(startDate);
-    sDate.setHours(0, 0, 0, 0);
-    const eDate = new Date(endDate);
-    eDate.setHours(0, 0, 0, 0);
+    const start = new Date(`${startDate}T${isFullDay ? "00:00" : startTime}`);
+    const end = new Date(`${endDate}T${isFullDay ? "23:59" : endTime}`);
 
-    if (eDate < sDate) {
-      setDurationStr("วันที่ไม่ถูกต้อง");
+    if (end < start) {
+      setDurationStr("วัน/เวลาไม่ถูกต้อง");
       return;
     }
 
     if (isFullDay) {
+      const sDate = new Date(startDate);
+      const eDate = new Date(endDate);
       const diffTime = Math.abs(eDate - sDate);
       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
       setDurationStr(`${diffDays} วัน`);
     } else {
-      if (!startTime || !endTime) return;
-
-      const startDT = new Date(startDate);
-      startDT.setHours(startTime.getHours(), startTime.getMinutes());
-      const endDT = new Date(endDate);
-      endDT.setHours(endTime.getHours(), endTime.getMinutes());
-
-      if (endDT <= startDT) {
-        setDurationStr("เวลาไม่ถูกต้อง");
-        return;
-      }
-
-      const diffMs = endDT - startDT;
+      const diffMs = end - start;
       const diffHrs = Math.floor(diffMs / (1000 * 60 * 60));
       const diffMins = Math.round((diffMs % (1000 * 60 * 60)) / 60000);
-
       setDurationStr(
         `${diffHrs} ชม. ${diffMins > 0 ? diffMins + " นาที" : ""}`
       );
     }
   }, [formData, isFullDay]);
 
-  // --- Helper Functions ---
+  // --- Helpers ---
   const getLeaveColor = (name = "") => {
     if (name.includes("ป่วย")) return "sick";
     if (name.includes("กิจ")) return "business";
@@ -158,9 +130,10 @@ const Leave = () => {
     return "category";
   };
 
-  const formatDateTH = (date) => {
-    if (!date) return "";
-    return new Date(date).toLocaleDateString("th-TH", {
+  const formatDateTH = (dateStr) => {
+    if (!dateStr) return "";
+    const date = new Date(dateStr);
+    return date.toLocaleDateString("th-TH", {
       day: "numeric",
       month: "short",
       year: "2-digit",
@@ -182,11 +155,28 @@ const Leave = () => {
     );
   };
 
-  // --- Submit Handler ---
+  // --- Filter Logic for Modal ---
+  const getFilteredHistory = () => {
+    return history.filter((item) => {
+      // 1. Search Text (Reason or Leave Type)
+      const textMatch =
+        item.leave_type_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (item.reason &&
+          item.reason.toLowerCase().includes(searchTerm.toLowerCase()));
+
+      // 2. Filter Dropdown
+      const typeMatch =
+        filterType === "all" || item.leave_type_name === filterType;
+
+      return textMatch && typeMatch;
+    });
+  };
+
+  // --- Submit ---
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!durationStr || durationStr.includes("ไม่ถูกต้อง")) {
-      return Swal.fire("ข้อมูลไม่ครบถ้วน", "กรุณาตรวจสอบวันและเวลา", "error");
+      return Swal.fire("ข้อมูลไม่ครบถ้วน", "กรุณาตรวจสอบวันและเวลา", "warning");
     }
 
     const selectedType = leaveTypes.find(
@@ -196,37 +186,35 @@ const Leave = () => {
 
     Swal.fire({
       title: "ยืนยันการขอลา?",
-      text: `ประเภท: ${typeName} | ระยะเวลา: ${durationStr}`,
+      html: `
+        <div class="text-start fs-6">
+          <p class="mb-1"><strong>ประเภท:</strong> ${typeName}</p>
+          <p class="mb-1"><strong>วันที่:</strong> ${formatDateTH(
+            formData.startDate
+          )} - ${formatDateTH(formData.endDate)}</p>
+          <p class="mb-0"><strong>รวม:</strong> <span class="text-primary">${durationStr}</span></p>
+        </div>
+      `,
       icon: "question",
       showCancelButton: true,
-      confirmButtonColor: "#1e2a45",
-      confirmButtonText: "ยืนยัน",
-      cancelButtonText: "ยกเลิก",
+      confirmButtonColor: "#4f46e5",
+      confirmButtonText: "ยืนยันส่งใบลา",
+      cancelButtonText: "ตรวจสอบก่อน",
+      reverseButtons: true,
     }).then(async (result) => {
       if (result.isConfirmed) {
         const submitData = new FormData();
         submitData.append("leaveTypeId", formData.leaveTypeId);
-        submitData.append(
-          "startDate",
-          formData.startDate.toISOString().split("T")[0]
-        );
-        submitData.append(
-          "endDate",
-          formData.endDate.toISOString().split("T")[0]
-        );
+        submitData.append("startDate", formData.startDate);
+        submitData.append("endDate", formData.endDate);
         submitData.append("isFullDay", isFullDay);
         submitData.append("reason", formData.reason);
 
-        if (!isFullDay && formData.startTime && formData.endTime) {
-          submitData.append(
-            "startTime",
-            formData.startTime.toTimeString().split(" ")[0]
-          );
-          submitData.append(
-            "endTime",
-            formData.endTime.toTimeString().split(" ")[0]
-          );
+        if (!isFullDay) {
+          submitData.append("startTime", formData.startTime);
+          submitData.append("endTime", formData.endTime);
         }
+
         if (formData.file) {
           submitData.append("file", formData.file);
         }
@@ -241,49 +229,30 @@ const Leave = () => {
           Swal.fire("สำเร็จ!", "ส่งคำขอลาเรียบร้อยแล้ว", "success");
           fetchHistory();
           fetchSummary();
-          setFormData({
-            ...formData,
+          setFormData((prev) => ({
+            ...prev,
             reason: "",
             file: null,
-            startDate: null,
-            endDate: null,
-          });
+            startDate: "",
+            endDate: "",
+          }));
           setDurationStr("");
         } catch (err) {
+          console.error(err);
           Swal.fire("Error", "เกิดข้อผิดพลาดในการบันทึก", "error");
         }
       }
     });
   };
 
-  // --- Advanced Filter Logic ---
-  const filteredHistory = history.filter((item) => {
-    // 1. Filter by Leave Type (ID)
-    const matchType =
-      filterType === "all" || item.leave_type_id === parseInt(filterType);
-
-    // 2. Filter by Status
-    const matchStatus = filterStatus === "all" || item.status === filterStatus;
-
-    // 3. Search (Date, Name)
-    const term = searchTerm.toLowerCase();
-    const dateStr = formatDateTH(item.start_date);
-    const matchSearch =
-      (item.leave_type_name || "").toLowerCase().includes(term) ||
-      dateStr.includes(term);
-
-    return matchType && matchStatus && matchSearch;
-  });
-
   return (
     <div className="leave-page fade-in">
       <div className="container-xl py-4">
-        {/* Header */}
         <div className="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
           <div>
             <h2 className="fw-bold text-dark m-0 d-flex align-items-center gap-2">
               <div className="icon-bg-primary">
-                <span className="material-symbols-rounded">wb_sunny</span>
+                <span className="material-symbols-rounded">edit_calendar</span>
               </div>
               ระบบแจ้งการลา
             </h2>
@@ -292,7 +261,6 @@ const Leave = () => {
         </div>
 
         <div className="row g-4">
-          {/* LEFT: Form */}
           <div className="col-lg-8">
             <div className="leave-card p-0 overflow-hidden h-100">
               <div className="card-header-custom p-4 border-bottom">
@@ -305,8 +273,9 @@ const Leave = () => {
               </div>
               <div className="p-4">
                 <form onSubmit={handleSubmit}>
+                  {/* ... (ส่วน Form เหมือนเดิม ไม่ได้เปลี่ยนแปลง Logic แต่ใช้ Layout เดิม) ... */}
                   <div className="row g-4">
-                    {/* Leave Types */}
+                    {/* 1. Leave Types */}
                     <div className="col-12">
                       <label className="form-label fw-bold text-muted small mb-3">
                         เลือกประเภทการลา
@@ -343,105 +312,89 @@ const Leave = () => {
                       </div>
                     </div>
 
-                    {/* Date Time */}
+                    {/* 2. Date Section (Keep logic as is) */}
                     <div className="col-12">
-                      <div className="bg-light rounded-4 p-3 border">
+                      <div className="bg-light rounded-4 p-4 border date-section-wrapper">
                         <div className="d-flex justify-content-between align-items-center mb-3">
-                          <label className="form-label fw-bold text-muted small m-0">
-                            ระบุวันและเวลา
+                          <label className="form-label fw-bold text-dark m-0 d-flex align-items-center gap-2">
+                            <span className="material-symbols-rounded text-primary">
+                              schedule
+                            </span>
+                            ระบุช่วงเวลา
                           </label>
-                          <div className="form-check form-switch d-flex align-items-center gap-2 m-0">
+
+                          <div className="toggle-switch-container">
                             <input
-                              className="form-check-input"
                               type="checkbox"
-                              role="switch"
+                              id="fullDaySwitch"
                               checked={isFullDay}
                               onChange={(e) => setIsFullDay(e.target.checked)}
-                              style={{ cursor: "pointer" }}
                             />
                             <label
-                              className="form-check-label fw-bold small text-dark"
-                              style={{ cursor: "pointer" }}
+                              htmlFor="fullDaySwitch"
+                              className="toggle-label"
                             >
-                              {isFullDay ? "ลาเต็มวัน" : "ระบุเวลา"}
+                              <span className="toggle-inner"></span>
+                              <span className="toggle-switch"></span>
                             </label>
+                            <span className="ms-2 small fw-bold text-muted">
+                              {isFullDay ? "ลาเต็มวัน" : "ระบุเวลา"}
+                            </span>
                           </div>
                         </div>
+
                         <div className="row g-3">
                           <div className="col-md-6">
-                            <div className="input-group-modern">
-                              <span className="input-icon material-symbols-rounded">
-                                calendar_today
-                              </span>
-                              <DatePicker
-                                selected={formData.startDate}
-                                onChange={(date) =>
-                                  handleDateChange("startDate", date)
-                                }
-                                className="form-control custom-input ps-5 w-100"
-                                placeholderText="ตั้งแต่วันที่"
-                                dateFormat="dd/MM/yyyy"
-                                locale="th"
-                                popperPlacement="bottom-start"
-                                required
-                              />
-                            </div>
+                            <label className="small text-muted mb-1">
+                              ตั้งแต่วันที่
+                            </label>
+                            <ThaiDatePicker
+                              value={formData.startDate}
+                              onChange={(date) =>
+                                handleDateChange("startDate", date)
+                              }
+                              placeholder="เลือกวันเริ่มลา"
+                            />
                           </div>
                           <div className="col-md-6">
-                            <div className="input-group-modern">
-                              <span className="input-icon material-symbols-rounded">
-                                event_upcoming
-                              </span>
-                              <DatePicker
-                                selected={formData.endDate}
-                                onChange={(date) =>
-                                  handleDateChange("endDate", date)
-                                }
-                                className="form-control custom-input ps-5 w-100"
-                                placeholderText="ถึงวันที่"
-                                dateFormat="dd/MM/yyyy"
-                                minDate={formData.startDate}
-                                locale="th"
-                                popperPlacement="bottom-start"
-                                required
-                              />
-                            </div>
+                            <label className="small text-muted mb-1">
+                              ถึงวันที่
+                            </label>
+                            <ThaiDatePicker
+                              value={formData.endDate}
+                              onChange={(date) =>
+                                handleDateChange("endDate", date)
+                              }
+                              placeholder="เลือกวันสิ้นสุด"
+                            />
                           </div>
+
                           {!isFullDay && (
                             <div className="col-12 fade-in">
-                              <div className="row g-3">
-                                <div className="col-6">
-                                  <label className="small text-muted ms-1 mb-1">
-                                    เวลาเริ่ม
-                                  </label>
-                                  <DatePicker
-                                    selected={formData.startTime}
-                                    onChange={(date) =>
-                                      handleDateChange("startTime", date)
-                                    }
-                                    showTimeSelect
-                                    showTimeSelectOnly
-                                    timeIntervals={15}
-                                    dateFormat="HH:mm"
-                                    placeholderText="09:00"
-                                    className="form-control custom-input text-center fw-bold w-100"
+                              <div className="time-selector-group">
+                                <div className="time-box">
+                                  <label>เวลาเริ่ม</label>
+                                  <input
+                                    type="time"
+                                    name="startTime"
+                                    value={formData.startTime}
+                                    onChange={handleChange}
+                                    className="time-input"
                                   />
                                 </div>
-                                <div className="col-6">
-                                  <label className="small text-muted ms-1 mb-1">
-                                    เวลาสิ้นสุด
-                                  </label>
-                                  <DatePicker
-                                    selected={formData.endTime}
-                                    onChange={(date) =>
-                                      handleDateChange("endTime", date)
-                                    }
-                                    showTimeSelect
-                                    showTimeSelectOnly
-                                    timeIntervals={15}
-                                    dateFormat="HH:mm"
-                                    placeholderText="18:00"
-                                    className="form-control custom-input text-center fw-bold w-100"
+                                <div className="separator">
+                                  <span className="material-symbols-rounded">
+                                    arrow_forward
+                                  </span>
+                                </div>
+                                <div className="time-box">
+                                  <label>เวลาสิ้นสุด</label>
+                                  <input
+                                    type="time"
+                                    name="endTime"
+                                    value={formData.endTime}
+                                    onChange={handleChange}
+                                    className="time-input"
                                   />
                                 </div>
                               </div>
@@ -451,7 +404,7 @@ const Leave = () => {
                       </div>
                     </div>
 
-                    {/* Duration & Reason */}
+                    {/* Duration Display */}
                     {durationStr && (
                       <div className="col-12">
                         <div className="duration-alert fade-in">
@@ -459,50 +412,69 @@ const Leave = () => {
                             <span className="material-symbols-rounded fs-5">
                               timelapse
                             </span>
-                            <span>รวม:</span>
+                            <span>ระยะเวลาที่ขอลา:</span>
                           </div>
-                          <span className="badge bg-white text-primary fs-6 shadow-sm">
+                          <span className="badge bg-white text-primary fs-6 shadow-sm px-3 py-2">
                             {durationStr}
                           </span>
                         </div>
                       </div>
                     )}
+
+                    {/* Reason & File */}
                     <div className="col-12">
                       <label className="form-label fw-bold text-muted small">
-                        เหตุผล
+                        เหตุผลการลา <span className="text-danger">*</span>
                       </label>
                       <textarea
                         className="form-control custom-input"
-                        rows="2"
+                        rows="3"
                         name="reason"
                         value={formData.reason}
                         onChange={handleChange}
-                        placeholder="ระบุสาเหตุ..."
+                        placeholder="ระบุสาเหตุการลา..."
                         required
                         style={{ resize: "none" }}
                       ></textarea>
                     </div>
+
                     <div className="col-12">
                       <label className="form-label fw-bold text-muted small">
-                        เอกสารแนบ
+                        เอกสารแนบ (ถ้ามี)
                       </label>
-                      <div className="input-group-modern">
-                        <span className="input-icon material-symbols-rounded">
-                          attach_file
-                        </span>
+                      <div className="file-upload-wrapper">
                         <input
                           type="file"
-                          className="form-control custom-input ps-5"
+                          id="fileUpload"
+                          className="d-none"
                           name="file"
                           onChange={handleChange}
                         />
+                        <label
+                          htmlFor="fileUpload"
+                          className="file-upload-label"
+                        >
+                          <span className="material-symbols-rounded fs-3 mb-2 text-primary">
+                            cloud_upload
+                          </span>
+                          <span className="fw-bold text-dark">
+                            {formData.file
+                              ? formData.file.name
+                              : "คลิกเพื่ออัปโหลดไฟล์"}
+                          </span>
+                          <small className="text-muted">
+                            รองรับ PDF, JPG, PNG (Max 5MB)
+                          </small>
+                        </label>
                       </div>
                     </div>
-                    <div className="col-12 mt-3">
+
+                    <div className="col-12 mt-4">
                       <button
                         type="submit"
-                        className="btn btn-modern-primary w-100 py-3 rounded-4 shadow-sm fw-bold"
+                        className="btn btn-modern-primary w-100 py-3 rounded-4 shadow-sm fw-bold d-flex align-items-center justify-content-center gap-2"
                       >
+                        <span className="material-symbols-rounded">send</span>
                         ส่งคำขออนุมัติ
                       </button>
                     </div>
@@ -512,104 +484,137 @@ const Leave = () => {
             </div>
           </div>
 
-          {/* RIGHT: Stats */}
+          {/* =======================================================
+            RIGHT: NEW PREMIUM STATS & HISTORY (ส่วนที่แก้ใหม่)
+           ======================================================= */}
           <div className="col-lg-4">
             <div className="d-flex flex-column gap-4 h-100">
-              <div className="leave-card p-4 bg-gradient-dark text-white position-relative overflow-hidden">
-                <div className="position-relative z-1">
-                  <h5 className="fw-bold mb-4 d-flex align-items-center gap-2">
-                    <span className="material-symbols-rounded">pie_chart</span>{" "}
-                    โควตาวันลา
-                  </h5>
-                  <div className="d-flex flex-column gap-4">
-                    {leaveStats.map((stat) => {
-                      const cssClass = getLeaveColor(stat.name);
-                      const remaining =
-                        stat.remaining !== null
-                          ? stat.remaining
-                          : stat.max_per_year;
-                      const used = stat.used;
-                      const total = stat.max_per_year;
-                      const percent = total > 0 ? (used / total) * 100 : 0;
-                      return (
-                        <div key={stat.id}>
-                          <div className="d-flex justify-content-between mb-1 align-items-end">
-                            <span className="fw-medium text-uppercase opacity-75 small">
-                              {stat.name}
-                            </span>
-                            <span className="fw-bold">
-                              {used}/{total}
-                            </span>
-                          </div>
-                          <div
-                            className="progress bg-white-20 rounded-pill"
-                            style={{ height: "8px" }}
-                          >
-                            <div
-                              className={`progress-bar bg-${
-                                cssClass === "sick"
-                                  ? "danger"
-                                  : cssClass === "business"
-                                  ? "warning"
-                                  : "primary"
-                              }`}
-                              style={{ width: `${percent}%` }}
-                            ></div>
-                          </div>
-                        </div>
-                      );
-                    })}
+              <div className="premium-stats-card">
+                <div className="premium-header">
+                  <div className="d-flex align-items-center gap-3">
+                    <div
+                      className="icon-bg-primary"
+                      style={{ borderRadius: "50%" }}
+                    >
+                      <span className="material-symbols-rounded">
+                        pie_chart
+                      </span>
+                    </div>
+                    <h5 className="fw-bold m-0 text-dark">โควตาวันลา</h5>
                   </div>
                 </div>
-                <div className="decorative-circle"></div>
-              </div>
 
-              {/* History Preview */}
-              <div className="leave-card p-0 flex-grow-1 d-flex flex-column">
-                <div className="p-3 border-bottom d-flex justify-content-between align-items-center bg-light">
-                  <h6 className="m-0 fw-bold text-dark">ประวัติล่าสุด</h6>
-                  <small
-                    className="text-primary fw-bold cursor-pointer hover-scale"
-                    onClick={() => setShowHistoryModal(true)}
-                  >
-                    ดูทั้งหมด
-                  </small>
-                </div>
-                <div className="history-list p-3 flex-grow-1">
-                  {history.slice(0, 4).map((item) => (
-                    <div key={item.id} className="history-item">
-                      <div
-                        className={`date-box ${getLeaveColor(
-                          item.leave_type_name
-                        )}`}
-                      >
-                        <span className="material-symbols-rounded fs-4">
-                          {getLeaveIcon(item.leave_type_name)}
-                        </span>
-                      </div>
-                      <div className="history-info">
-                        <div className="d-flex justify-content-between align-items-start">
-                          <div>
-                            <div
-                              className="fw-bold text-dark"
-                              style={{ fontSize: "0.9rem" }}
-                            >
-                              {item.leave_type_name}
-                            </div>
-                            <div
-                              className="text-muted"
-                              style={{ fontSize: "0.75rem" }}
-                            >
-                              {formatDateTH(item.start_date)}
-                            </div>
-                          </div>
-                          <div className="text-end">
-                            {getStatusBadge(item.status)}
-                          </div>
+                <div className="quota-premium-list mt-3">
+                  {leaveStats.map((stat) => {
+                    const cssClass = getLeaveColor(stat.name);
+                    const used = stat.used;
+                    const total = stat.max_per_year;
+                    const percent = total > 0 ? (used / total) * 100 : 0;
+                    const remaining = total - used;
+
+                    // Map class to gradient
+                    let gradientClass = "grad-other";
+                    if (cssClass === "sick") gradientClass = "grad-sick";
+                    if (cssClass === "business")
+                      gradientClass = "grad-business";
+                    if (cssClass === "vacation")
+                      gradientClass = "grad-vacation";
+
+                    return (
+                      <div key={stat.id} className="quota-visual-item">
+                        <div className="d-flex justify-content-between align-items-center">
+                          <span className="quota-label">{stat.name}</span>
+                          <span className="quota-remain">
+                            เหลือ {remaining} วัน
+                          </span>
+                        </div>
+
+                        <div className="premium-progress-bg">
+                          <div
+                            className={`premium-progress-bar ${gradientClass}`}
+                            style={{ width: `${percent}%` }}
+                          ></div>
+                        </div>
+
+                        <div className="quota-detail">
+                          <span>ใช้ไปแล้ว {used} วัน</span>
+                          <span>ทั้งหมด {total} วัน</span>
                         </div>
                       </div>
+                    );
+                  })}
+                </div>
+
+                {/* --- 2. RECENT HISTORY SECTION --- */}
+                <div className="history-premium-wrapper">
+                  <div className="premium-header bg-transparent border-0 pb-3 pt-4">
+                    <div className="d-flex align-items-center gap-2">
+                      <span className="material-symbols-rounded text-primary fs-5">
+                        history
+                      </span>
+                      <h6 className="fw-bold m-0 text-dark">ประวัติล่าสุด</h6>
                     </div>
-                  ))}
+                    <button
+                      className="btn-see-all"
+                      onClick={() => setShowHistoryModal(true)}
+                    >
+                      ดูทั้งหมด{" "}
+                      <span className="material-symbols-rounded align-middle fs-6">
+                        arrow_forward
+                      </span>
+                    </button>
+                  </div>
+
+                  <div className="history-premium-list">
+                    {history.slice(0, 4).map((item) => (
+                      <div key={item.id} className="history-timeline-item">
+                        <div
+                          className={`icon-box-premium ${getLeaveColor(
+                            item.leave_type_name
+                          )}`}
+                        >
+                          <span className="material-symbols-rounded fs-5">
+                            {getLeaveIcon(item.leave_type_name)}
+                          </span>
+                        </div>
+                        <div className="history-content">
+                          <div className="history-title">
+                            {item.leave_type_name}
+                          </div>
+                          <div className="history-date">
+                            {formatDateTH(item.start_date)}
+                          </div>
+                        </div>
+                        <div>
+                          {/* Badge แบบย่อ */}
+                          {item.status === "approved" && (
+                            <span className="material-symbols-rounded text-success">
+                              check_circle
+                            </span>
+                          )}
+                          {item.status === "rejected" && (
+                            <span className="material-symbols-rounded text-danger">
+                              cancel
+                            </span>
+                          )}
+                          {item.status === "pending" && (
+                            <span className="material-symbols-rounded text-secondary">
+                              hourglass_top
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+
+                    {history.length === 0 && (
+                      <div className="text-center text-muted py-5 opacity-50">
+                        <span className="material-symbols-rounded fs-1 d-block mb-2">
+                          event_note
+                        </span>
+                        ไม่มีประวัติการลา
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
@@ -617,220 +622,155 @@ const Leave = () => {
         </div>
       </div>
 
-      {/* --- FULL HISTORY MODAL --- */}
-      {showHistoryModal && (
-        <div className="modal-backdrop-custom fade-in">
-          <div className="modal-dialog-custom">
-            <div className="modal-content-custom">
-              {!selectedHistoryItem ? (
-                <>
-                  {/* Header */}
-                  <div className="modal-header-custom p-4 border-bottom d-flex justify-content-between bg-white sticky-top">
-                    <h5 className="m-0 fw-bold d-flex align-items-center gap-2">
-                      <span className="material-symbols-rounded text-primary">
-                        history
-                      </span>
-                      ประวัติการลาทั้งหมด
-                    </h5>
-                    <button
-                      className="btn-close-custom"
-                      onClick={handleCloseModal}
+      {/* =======================================================
+        MODAL: FULL HISTORY (New Beautiful Design)
+       ======================================================= */}
+      <ModernModal
+        isOpen={showHistoryModal}
+        onClose={() => setShowHistoryModal(false)}
+        title="ประวัติการลาทั้งหมด"
+        icon="history_edu"
+        maxWidth="900px"
+      >
+        <div
+          className="p-4"
+          style={{ background: "#f8fafc", minHeight: "60vh" }}
+        >
+          {/* Search Bar */}
+          <div className="row g-3 mb-4">
+            <div className="col-md-8">
+              <div className="input-group-modern bg-white rounded-4 shadow-sm">
+                <span className="material-symbols-rounded input-icon">
+                  search
+                </span>
+                <input
+                  type="text"
+                  className="form-control custom-input ps-5 border-0"
+                  placeholder="ค้นหา..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
+            </div>
+            <div className="col-md-4">
+              <ModernDropdown
+                name="filterType"
+                value={filterType}
+                onChange={(e) => setFilterType(e.target.value)}
+                options={[
+                  { label: "ทั้งหมด", value: "all" },
+                  ...leaveTypes.map((t) => ({ label: t.name, value: t.name })),
+                ]}
+              />
+            </div>
+          </div>
+
+          {/* Full History List */}
+          <div className="history-full-list-wrapper">
+            {getFilteredHistory().length > 0 ? (
+              getFilteredHistory().map((item) => (
+                <div
+                  key={item.id}
+                  className={`full-history-card ${getLeaveColor(
+                    item.leave_type_name
+                  )}`}
+                >
+                  <div className="d-flex gap-3 align-items-start">
+                    <div
+                      className={`icon-box-premium ${getLeaveColor(
+                        item.leave_type_name
+                      )}`}
+                      style={{
+                        width: "60px",
+                        height: "60px",
+                        borderRadius: "18px",
+                        fontSize: "1.8rem",
+                      }}
                     >
-                      <span className="material-symbols-rounded">close</span>
-                    </button>
-                  </div>
-
-                  {/* Filters */}
-                  <div className="p-3 bg-light border-bottom sticky-sub-top">
-                    <div className="row g-2">
-                      {/* Search Input */}
-                      <div className="col-12 col-md-6">
-                        <div className="input-group-modern bg-white rounded-3 shadow-sm border-0">
-                          <span className="input-icon material-symbols-rounded">
-                            search
-                          </span>
-                          <input
-                            type="text"
-                            className="form-control custom-input border-0 ps-5"
-                            placeholder="ค้นหา วันที่, ประเภท..."
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                          />
-                        </div>
-                      </div>
-                      {/* Filter: Type */}
-                      <div className="col-6 col-md-3">
-                        <select
-                          className="form-select custom-input border-0 shadow-sm"
-                          value={filterType}
-                          onChange={(e) => setFilterType(e.target.value)}
-                        >
-                          <option value="all">ทุกประเภท</option>
-                          {leaveTypes.map((t) => (
-                            <option key={t.id} value={t.id}>
-                              {t.name}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                      {/* Filter: Status */}
-                      <div className="col-6 col-md-3">
-                        <select
-                          className="form-select custom-input border-0 shadow-sm"
-                          value={filterStatus}
-                          onChange={(e) => setFilterStatus(e.target.value)}
-                        >
-                          <option value="all">ทุกสถานะ</option>
-                          <option value="pending">รออนุมัติ</option>
-                          <option value="approved">อนุมัติแล้ว</option>
-                          <option value="rejected">ไม่อนุมัติ</option>
-                        </select>
-                      </div>
+                      <span className="material-symbols-rounded">
+                        {getLeaveIcon(item.leave_type_name)}
+                      </span>
                     </div>
-                  </div>
 
-                  {/* List */}
-                  <div className="modal-body-custom p-3 bg-light">
-                    <div className="d-flex flex-column gap-3">
-                      {filteredHistory.length > 0 ? (
-                        filteredHistory.map((item) => (
-                          <div
-                            key={item.id}
-                            className="history-card-full bg-white p-3 rounded-4 shadow-sm border d-flex justify-content-between align-items-center hover-scale cursor-pointer"
-                            onClick={() => setSelectedHistoryItem(item)}
-                          >
-                            <div className="d-flex gap-3 align-items-center">
-                              <div
-                                className={`date-box large ${getLeaveColor(
-                                  item.leave_type_name
-                                )}`}
-                              >
-                                <span className="material-symbols-rounded fs-3">
-                                  {getLeaveIcon(item.leave_type_name)}
-                                </span>
-                              </div>
-                              <div>
-                                <h6 className="fw-bold m-0 text-dark">
-                                  {item.leave_type_name}
-                                </h6>
-                                <div className="text-muted small mt-1">
-                                  {formatDateTH(item.start_date)} -{" "}
-                                  {formatDateTH(item.end_date)}
-                                </div>
-                              </div>
-                            </div>
-                            <div className="text-end d-flex flex-column align-items-end">
-                              {getStatusBadge(item.status)}
-                              <small
-                                className="text-muted mt-1"
-                                style={{ fontSize: "0.7rem" }}
-                              >
-                                แตะเพื่อดู
-                              </small>
-                            </div>
-                          </div>
-                        ))
-                      ) : (
-                        <div className="text-center py-5 text-muted">
-                          <span className="material-symbols-rounded fs-1 opacity-25">
-                            search_off
-                          </span>
-                          <p className="mt-2">ไม่พบข้อมูลตามเงื่อนไข</p>
-                        </div>
+                    <div className="full-history-info">
+                      <h6>{item.leave_type_name}</h6>
+                      <div className="full-history-meta mb-2">
+                        <span>
+                          <i className="material-symbols-rounded fs-6">
+                            calendar_today
+                          </i>
+                          {formatDateTH(item.start_date)} -{" "}
+                          {formatDateTH(item.end_date)}
+                        </span>
+                        <span className="text-primary fw-bold bg-primary-subtle px-2 rounded">
+                          {item.total_days} วัน
+                        </span>
+                      </div>
+                      {item.reason && (
+                        <p className="text-muted m-0 small fst-italic">
+                          "{item.reason}"
+                        </p>
                       )}
                     </div>
                   </div>
-                </>
-              ) : (
-                <>
-                  {/* Detail View */}
-                  <div className="modal-header-custom p-3 border-bottom d-flex align-items-center gap-3 bg-white sticky-top">
-                    <button
-                      className="btn-back-custom"
-                      onClick={() => setSelectedHistoryItem(null)}
-                    >
-                      <span className="material-symbols-rounded">
-                        arrow_back
-                      </span>
-                    </button>
-                    <h5 className="m-0 fw-bold">รายละเอียด</h5>
-                  </div>
-                  <div className="modal-body-custom p-4 bg-light">
-                    <div className="bg-white rounded-4 shadow-sm p-4 border slide-in-right">
-                      <div className="text-center mb-4">
-                        <div
-                          className={`date-box large mx-auto mb-2 ${getLeaveColor(
-                            selectedHistoryItem.leave_type_name
-                          )}`}
-                          style={{ width: "64px", height: "64px" }}
-                        >
-                          <span className="material-symbols-rounded fs-1">
-                            {getLeaveIcon(selectedHistoryItem.leave_type_name)}
-                          </span>
-                        </div>
-                        <h4 className="fw-bold text-dark mb-1">
-                          {selectedHistoryItem.leave_type_name}
-                        </h4>
-                        <div>{getStatusBadge(selectedHistoryItem.status)}</div>
-                      </div>
 
-                      <div className="row g-4 border-top pt-4">
-                        <div className="col-6">
-                          <label className="small text-muted fw-bold">
-                            วันเริ่มลา
-                          </label>
-                          <div className="fw-medium">
-                            {formatDateTH(selectedHistoryItem.start_date)}
-                          </div>
-                        </div>
-                        <div className="col-6">
-                          <label className="small text-muted fw-bold">
-                            ถึงวันที่
-                          </label>
-                          <div className="fw-medium">
-                            {formatDateTH(selectedHistoryItem.end_date)}
-                          </div>
-                        </div>
-                        <div className="col-12">
-                          <label className="small text-muted fw-bold mb-1">
-                            จำนวนรวม
-                          </label>
-                          <div className="fw-bold text-primary">
-                            {selectedHistoryItem.total_days} วัน
-                          </div>
-                        </div>
-                        <div className="col-12">
-                          <label className="small text-muted fw-bold mb-1">
-                            เหตุผลการลา
-                          </label>
-                          <div className="bg-light p-3 rounded border text-secondary">
-                            {selectedHistoryItem.reason || "- ไม่ได้ระบุ -"}
-                          </div>
-                        </div>
-                        {selectedHistoryItem.medical_certificate_url && (
-                          <div className="col-12 text-center mt-4">
-                            <a
-                              href={`${apiUrl}/uploads/leaves/${selectedHistoryItem.medical_certificate_url}`}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-2"
-                            >
-                              <span className="material-symbols-rounded">
-                                attachment
-                              </span>{" "}
-                              ดูเอกสารแนบ
-                            </a>
-                          </div>
-                        )}
-                      </div>
+                  <div className="d-flex flex-column align-items-end justify-content-between h-100 gap-2">
+                    <div className={`pill-badge ${item.status}`}>
+                      {item.status === "approved" && (
+                        <>
+                          <span className="material-symbols-rounded fs-6">
+                            check
+                          </span>{" "}
+                          อนุมัติ
+                        </>
+                      )}
+                      {item.status === "rejected" && (
+                        <>
+                          <span className="material-symbols-rounded fs-6">
+                            close
+                          </span>{" "}
+                          ไม่อนุมัติ
+                        </>
+                      )}
+                      {item.status === "pending" && (
+                        <>
+                          <span className="material-symbols-rounded fs-6">
+                            hourglass_empty
+                          </span>{" "}
+                          รออนุมัติ
+                        </>
+                      )}
+                      {item.status === "cancelled" && (
+                        <>
+                          <span className="material-symbols-rounded fs-6">
+                            block
+                          </span>{" "}
+                          ยกเลิก
+                        </>
+                      )}
                     </div>
+                    <small
+                      className="text-muted opacity-50"
+                      style={{ fontSize: "0.7rem" }}
+                    >
+                      {formatDateTH(item.created_at)}
+                    </small>
                   </div>
-                </>
-              )}
-            </div>
+                </div>
+              ))
+            ) : (
+              <div className="text-center py-5">
+                <div className="text-muted opacity-50">
+                  <span className="material-symbols-rounded fs-1">
+                    search_off
+                  </span>
+                  <p className="mt-2">ไม่พบข้อมูล</p>
+                </div>
+              </div>
+            )}
           </div>
         </div>
-      )}
+      </ModernModal>
     </div>
   );
 };

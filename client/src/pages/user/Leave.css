@@ -626,3 +626,457 @@
     font-size: 22px;
   }
 }
+
+/* Leave.css */
+
+/* Global & Utilities */
+.leave-page {
+  font-family: "Kanit", sans-serif;
+  background-color: #f8f9fa; /* สีพื้นหลังรวม */
+  min-height: 100vh;
+  padding-bottom: 40px;
+}
+
+.leave-card {
+  background: white;
+  border-radius: 20px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  border: 1px solid rgba(0, 0, 0, 0.02);
+  transition: all 0.3s;
+}
+
+.btn-modern-primary {
+  background: linear-gradient(135deg, #4f46e5, #4338ca);
+  color: white;
+  border: none;
+  transition: all 0.2s;
+}
+.btn-modern-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(79, 70, 229, 0.3);
+  color: white;
+}
+
+/* Toggle Switch Style */
+.toggle-switch-container {
+  display: flex;
+  align-items: center;
+}
+.toggle-switch-container input[type="checkbox"] {
+  display: none;
+}
+.toggle-label {
+  width: 48px;
+  height: 26px;
+  background: #e2e8f0;
+  border-radius: 20px;
+  position: relative;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+.toggle-label .toggle-switch {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 20px;
+  height: 20px;
+  background: white;
+  border-radius: 50%;
+  transition: transform 0.3s;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+.toggle-switch-container input:checked + .toggle-label {
+  background: #4f46e5;
+}
+.toggle-switch-container input:checked + .toggle-label .toggle-switch {
+  transform: translateX(22px);
+}
+
+/* Date & Time Section */
+.date-section-wrapper {
+  background-color: #f8fafc !important;
+  border: 1px dashed #cbd5e1 !important;
+}
+
+/* Custom Time Selector */
+.time-selector-group {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: white;
+  padding: 15px;
+  border-radius: 16px;
+  border: 1px solid #e2e8f0;
+  margin-top: 15px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+}
+
+.time-box {
+  display: flex;
+  flex-direction: column;
+  width: 45%;
+}
+
+.time-box label {
+  font-size: 0.75rem;
+  color: #64748b;
+  margin-bottom: 4px;
+  font-weight: 600;
+}
+
+.time-input {
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 8px 12px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #1e293b;
+  width: 100%;
+  text-align: center;
+  background: #f8fafc;
+  outline: none;
+  transition: all 0.2s;
+  font-family: "Kanit", sans-serif;
+}
+.time-input:focus {
+  border-color: #4f46e5;
+  background: white;
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+}
+
+.separator {
+  color: #cbd5e1;
+  display: flex;
+  align-items: flex-end;
+  padding-bottom: 8px;
+}
+
+/* File Upload */
+.file-upload-wrapper {
+  width: 100%;
+}
+.file-upload-label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 20px;
+  border: 2px dashed #e2e8f0;
+  border-radius: 16px;
+  background: #fdfdfd;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.file-upload-label:hover {
+  border-color: #4f46e5;
+  background: #eef2ff;
+}
+
+/* ... Keep previous Leave Type Card styles (They were good) ... */
+/* ... Keep History styles ... */
+/* =========================================
+   PREMIUM QUOTA & HISTORY DESIGN (NEW)
+   ========================================= */
+
+/* --- Variables for Premium Look --- */
+:root {
+  --p-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.08);
+  --p-hover-shadow: 0 20px 40px -10px rgba(79, 70, 229, 0.15);
+  --p-border: 1px solid rgba(241, 245, 249, 1);
+  --p-radius: 24px;
+}
+
+/* 1. CONTAINER CARD */
+.premium-stats-card {
+  background: #ffffff;
+  border-radius: var(--p-radius);
+  box-shadow: var(--p-shadow);
+  border: 1px solid white;
+  overflow: hidden;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.premium-header {
+  padding: 24px 24px 10px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: linear-gradient(to bottom, #ffffff, #fafafa);
+}
+
+/* 2. QUOTA SECTION (DASHBOARD STYLE) */
+.quota-premium-list {
+  padding: 0 24px 24px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.quota-visual-item {
+  background: #ffffff;
+  border: 1px solid #f1f5f9;
+  border-radius: 16px;
+  padding: 16px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.quota-visual-item:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px -8px rgba(0, 0, 0, 0.06);
+  border-color: #e2e8f0;
+}
+
+/* Progress Bar Redesign */
+.premium-progress-bg {
+  height: 10px;
+  background: #f1f5f9;
+  border-radius: 20px;
+  overflow: hidden;
+  margin-top: 12px;
+  position: relative;
+}
+
+.premium-progress-bar {
+  height: 100%;
+  border-radius: 20px;
+  position: relative;
+  transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Gradients */
+.grad-sick {
+  background: linear-gradient(90deg, #f87171, #ef4444);
+  box-shadow: 0 2px 10px rgba(239, 68, 68, 0.3);
+}
+.grad-business {
+  background: linear-gradient(90deg, #fb923c, #f97316);
+  box-shadow: 0 2px 10px rgba(249, 115, 22, 0.3);
+}
+.grad-vacation {
+  background: linear-gradient(90deg, #60a5fa, #3b82f6);
+  box-shadow: 0 2px 10px rgba(59, 130, 246, 0.3);
+}
+.grad-other {
+  background: linear-gradient(90deg, #22d3ee, #06b6d4);
+  box-shadow: 0 2px 10px rgba(6, 182, 212, 0.3);
+}
+
+/* Text Styles */
+.quota-label {
+  font-weight: 600;
+  color: #334155;
+  font-size: 0.95rem;
+}
+.quota-remain {
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: #0f172a;
+  background: #f1f5f9;
+  padding: 4px 10px;
+  border-radius: 10px;
+}
+.quota-detail {
+  font-size: 0.75rem;
+  color: #94a3b8;
+  display: flex;
+  justify-content: space-between;
+  margin-top: 6px;
+  font-weight: 500;
+}
+
+/* 3. RECENT HISTORY (TIMELINE STYLE) */
+.history-premium-wrapper {
+  flex-grow: 1;
+  background: #f8fafc; /* พื้นหลังแยกโซน */
+  border-top: 1px dashed #e2e8f0;
+  display: flex;
+  flex-direction: column;
+}
+
+.history-premium-list {
+  padding: 0 20px 20px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow-y: auto;
+  max-height: 350px;
+}
+
+.history-timeline-item {
+  background: white;
+  border-radius: 16px;
+  padding: 14px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
+  border: 1px solid transparent;
+  transition: all 0.2s;
+}
+
+.history-timeline-item:hover {
+  transform: translateX(5px);
+  border-color: #cbd5e1;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.icon-box-premium {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  flex-shrink: 0;
+  background: #f8fafc; /* Default */
+}
+
+/* Icon Colors */
+.icon-box-premium.sick {
+  background: #fef2f2;
+  color: #ef4444;
+}
+.icon-box-premium.business {
+  background: #fff7ed;
+  color: #f97316;
+}
+.icon-box-premium.vacation {
+  background: #eff6ff;
+  color: #3b82f6;
+}
+.icon-box-premium.other {
+  background: #ecfeff;
+  color: #06b6d4;
+}
+
+.history-content {
+  flex-grow: 1;
+  min-width: 0;
+}
+.history-title {
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 2px;
+  font-size: 0.9rem;
+}
+.history-date {
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+/* 4. MODAL FULL HISTORY (CARD GRID) */
+.full-history-card {
+  background: white;
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 16px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  position: relative;
+  overflow: hidden;
+}
+
+.full-history-card::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 5px;
+  background: #cbd5e1;
+  transition: width 0.2s;
+}
+
+.full-history-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1),
+    0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  border-color: #cbd5e1;
+}
+.full-history-card:hover::before {
+  width: 8px;
+}
+
+/* Color Indicators */
+.full-history-card.sick::before {
+  background: #ef4444;
+}
+.full-history-card.business::before {
+  background: #f97316;
+}
+.full-history-card.vacation::before {
+  background: #3b82f6;
+}
+.full-history-card.other::before {
+  background: #06b6d4;
+}
+
+.full-history-info h6 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin-bottom: 6px;
+}
+.full-history-meta {
+  display: flex;
+  gap: 12px;
+  font-size: 0.85rem;
+  color: #64748b;
+  align-items: center;
+}
+.full-history-meta span {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.pill-badge {
+  padding: 6px 12px;
+  border-radius: 30px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.pill-badge.approved {
+  background: #dcfce7;
+  color: #166534;
+}
+.pill-badge.rejected {
+  background: #fee2e2;
+  color: #991b1b;
+}
+.pill-badge.pending {
+  background: #f1f5f9;
+  color: #475569;
+}
+
+/* See All Button */
+.btn-see-all {
+  color: #4f46e5;
+  font-weight: 600;
+  font-size: 0.85rem;
+  padding: 6px 12px;
+  border-radius: 8px;
+  background: transparent;
+  transition: all 0.2s;
+  border: none;
+}
+.btn-see-all:hover {
+  background: #e0e7ff;
+  color: #3730a3;
+}
