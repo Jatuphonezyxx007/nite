@@ -49,8 +49,18 @@ function ManageEmployees() {
   const config = { headers: { Authorization: `Bearer ${token}` } };
 
   const roleOptions = [
-    { value: "2", label: "User (ทั่วไป)", icon: "person" },
-    { value: "1", label: "Admin (ผู้ดูแลระบบ)", icon: "verified_user" },
+    {
+      value: "2",
+      label: "User (ทั่วไป)",
+      icon: "person",
+      className: "status-user",
+    },
+    {
+      value: "1",
+      label: "Admin (ผู้ดูแลระบบ)",
+      icon: "verified_user",
+      className: "status-admin",
+    },
   ];
 
   const prefixThOptions = [

@@ -467,3 +467,30 @@
     border-bottom: 1px solid var(--border-light);
   }
 }
+
+/* ใส่เพิ่มต่อท้ายไฟล์ ManageEmployees.css */
+
+/* สีสำหรับ User (Primary/Blue Tone) */
+.modern-dropdown-trigger.status-user {
+  background-color: #eff6ff !important; /* bg-blue-50 */
+  color: #1d4ed8 !important; /* text-blue-700 */
+  border: 1px solid #bfdbfe !important; /* border-blue-200 */
+}
+
+/* สีสำหรับ Admin (Danger/Red Tone) */
+.modern-dropdown-trigger.status-admin {
+  background-color: #fef2f2 !important; /* bg-red-50 */
+  color: #b91c1c !important; /* text-red-700 */
+  border: 1px solid #fecaca !important; /* border-red-200 */
+}
+
+/* Override Icon สีให้เข้ากัน */
+.status-user .dropdown-arrow,
+.status-user .material-symbols-rounded {
+  color: #1d4ed8 !important;
+}
+
+.status-admin .dropdown-arrow,
+.status-admin .material-symbols-rounded {
+  color: #b91c1c !important;
+}
