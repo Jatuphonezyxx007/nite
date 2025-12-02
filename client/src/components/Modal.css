@@ -1,0 +1,92 @@
+/* Modal Overlay (Backdrop) */
+.modern-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(30, 42, 69, 0.75); /* สีธีมของคุณ */
+  backdrop-filter: blur(4px);
+  z-index: 1050;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  animation: fadeIn 0.2s forwards;
+}
+
+/* Modal Container */
+.modern-modal-container {
+  background: white;
+  width: 100%;
+  max-width: 1100px; /* Default width (ปรับได้ผ่าน props) */
+  max-height: 90vh;
+  border-radius: 24px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transform: scale(0.95);
+  animation: slideUp 0.3s forwards cubic-bezier(0.16, 1, 0.3, 1);
+  margin: 16px;
+}
+
+/* Header */
+.modern-modal-header {
+  padding: 20px 30px;
+  border-bottom: 1px solid #e5e7eb;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: white;
+  flex-shrink: 0;
+}
+
+/* Close Button */
+.modern-modal-close {
+  background: #f3f4f6;
+  border: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #6b7280;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.modern-modal-close:hover {
+  background: #e5e7eb;
+  color: #111827;
+  transform: rotate(90deg);
+}
+
+/* Body Scrollable */
+.modern-modal-body {
+  overflow-y: auto;
+  flex-grow: 1;
+  /* Custom Scrollbar */
+}
+.modern-modal-body::-webkit-scrollbar {
+  width: 6px;
+}
+.modern-modal-body::-webkit-scrollbar-track {
+  background: transparent;
+}
+.modern-modal-body::-webkit-scrollbar-thumb {
+  background-color: #cbd5e1;
+  border-radius: 10px;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  to {
+    opacity: 1;
+  }
+}
+@keyframes slideUp {
+  to {
+    transform: scale(1);
+  }
+}

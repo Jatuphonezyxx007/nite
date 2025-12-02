@@ -1,0 +1,105 @@
+.modern-dropdown-container {
+  position: relative;
+  width: 100%;
+}
+
+/* ตัว Trigger (ส่วนที่กด) */
+.modern-dropdown-trigger {
+  background-color: #f3f4f6;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 0.9rem;
+  color: #1f2937;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  user-select: none;
+}
+
+.modern-dropdown-trigger:hover {
+  background-color: #e5e7eb;
+}
+
+.modern-dropdown-trigger.active {
+  background-color: #ffffff;
+  border-color: #1e2a45; /* Primary Color */
+  box-shadow: 0 0 0 4px rgba(30, 42, 69, 0.1);
+}
+
+/* ไอคอนลูกศร */
+.dropdown-arrow {
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  color: #6b7280;
+}
+.modern-dropdown-trigger.active .dropdown-arrow {
+  transform: rotate(180deg);
+  color: #1e2a45;
+}
+
+/* ตัว Panel (รายการเมนู) */
+.modern-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  width: 100%;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1),
+    0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  border: 1px solid #f3f4f6;
+  padding: 6px;
+  z-index: 100;
+
+  /* Animation เริ่มต้น */
+  opacity: 0;
+  transform: translateY(-10px) scale(0.98);
+  pointer-events: none;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* สถานะเปิด */
+.modern-dropdown-menu.open {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  pointer-events: auto;
+}
+
+/* รายการตัวเลือก (Option) */
+.modern-dropdown-item {
+  padding: 10px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  color: #374151;
+  font-size: 0.9rem;
+  transition: background 0.15s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.modern-dropdown-item:hover {
+  background-color: #f3f4f6;
+  color: #1e2a45;
+}
+
+.modern-dropdown-item.selected {
+  background-color: #eff6ff;
+  color: #1e2a45;
+  font-weight: 500;
+}
+
+/* Scrollbar สำหรับรายการเยอะๆ */
+.modern-dropdown-menu-inner {
+  max-height: 250px;
+  overflow-y: auto;
+}
+.modern-dropdown-menu-inner::-webkit-scrollbar {
+  width: 4px;
+}
+.modern-dropdown-menu-inner::-webkit-scrollbar-thumb {
+  background-color: #d1d5db;
+  border-radius: 4px;
+}

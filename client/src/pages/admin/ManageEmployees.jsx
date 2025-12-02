@@ -2,6 +2,8 @@ import { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import Swal from "sweetalert2";
 import "./ManageEmployees.css";
+import Modal from "../../components/Modal";
+import Dropdown from "../../components/DropDown";
 
 function ManageEmployees() {
   const [users, setUsers] = useState([]);
@@ -12,10 +14,29 @@ function ManageEmployees() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
-  // Modal State
+  // --- Modal & Form State ---
   const [showModal, setShowModal] = useState(false);
-  const [editingUser, setEditingUser] = useState(null);
   const [showDeleted, setShowDeleted] = useState(false);
+
+  // Form Data State
+  const initialFormState = {
+    id: null,
+    emp_code: "",
+    username: "",
+    role_id: "2",
+    email: "",
+    password: "",
+    position: "",
+    prefix_th: "นาย",
+    name_th: "",
+    lastname_th: "",
+    nickname_th: "",
+    prefix_en: "Mr.",
+    name_en: "",
+    lastname_en: "",
+    nickname_en: "",
+  };
+  const [formData, setFormData] = useState(initialFormState);
 
   // Image State
   const [selectedImage, setSelectedImage] = useState(null);
@@ -27,27 +48,45 @@ function ManageEmployees() {
   const token = localStorage.getItem("token");
   const config = { headers: { Authorization: `Bearer ${token}` } };
 
+  const roleOptions = [
+    { value: "2", label: "User (ทั่วไป)", icon: "person" },
+    { value: "1", label: "Admin (ผู้ดูแลระบบ)", icon: "verified_user" },
+  ];
+
+  const prefixThOptions = [
+    { value: "นาย", label: "นาย" },
+    { value: "นาง", label: "นาง" },
+    { value: "นางสาว", label: "นางสาว" },
+  ];
+
+  const prefixEnOptions = [
+    { value: "Mr.", label: "Mr." },
+    { value: "Mrs.", label: "Mrs." },
+    { value: "Ms.", label: "Ms." },
+  ];
+
   useEffect(() => {
     fetchUsers();
   }, [showDeleted]);
 
   useEffect(() => {
-    const results = users.filter((user) => {
-      const term = searchTerm.toLowerCase();
-      // เพิ่มการค้นหาจาก username และ emp_code
-      return (
-        user.username?.toLowerCase().includes(term) || // <--- เพิ่มตรงนี้
-        user.name_th?.toLowerCase().includes(term) ||
-        user.name_en?.toLowerCase().includes(term) ||
-        user.email?.toLowerCase().includes(term) ||
-        String(user.id).toLowerCase().includes(term) ||
-        (user.emp_code && user.emp_code.toLowerCase().includes(term)) ||
-        user.role?.toLowerCase().includes(term) ||
-        user.position?.toLowerCase().includes(term)
-      );
-    });
-    setFilteredUsers(results);
-    setCurrentPage(1);
+    if (users.length > 0) {
+      const results = users.filter((user) => {
+        const term = searchTerm.toLowerCase();
+        return (
+          user.username?.toLowerCase().includes(term) ||
+          user.name_th?.toLowerCase().includes(term) ||
+          user.name_en?.toLowerCase().includes(term) ||
+          user.email?.toLowerCase().includes(term) ||
+          String(user.id).toLowerCase().includes(term) ||
+          (user.emp_code && user.emp_code.toLowerCase().includes(term)) ||
+          user.role?.toLowerCase().includes(term) ||
+          user.position?.toLowerCase().includes(term)
+        );
+      });
+      setFilteredUsers(results);
+      setCurrentPage(1);
+    }
   }, [searchTerm, users]);
 
   const fetchUsers = async () => {
@@ -75,14 +114,31 @@ function ManageEmployees() {
 
   // --- Handlers ---
   const handleOpenAddModal = () => {
-    setEditingUser(null);
+    setFormData(initialFormState);
     setPreviewUrl(null);
     setSelectedImage(null);
     setShowModal(true);
   };
 
   const handleEditClick = (user) => {
-    setEditingUser(user);
+    setFormData({
+      id: user.id,
+      emp_code: user.emp_code || "",
+      username: user.username || "",
+      role_id: user.role_id ? String(user.role_id) : "2",
+      email: user.email || "",
+      password: "", // Password is blank on edit
+      position: user.position || "",
+      prefix_th: user.prefix_th || "นาย",
+      name_th: user.name_th || "",
+      lastname_th: user.lastname_th || "",
+      nickname_th: user.nickname_th || "",
+      prefix_en: user.prefix_en || "Mr.",
+      name_en: user.name_en || "",
+      lastname_en: user.lastname_en || "",
+      nickname_en: user.nickname_en || "",
+    });
+
     if (user.profile_image) {
       setPreviewUrl(`${apiUrl}/uploads/profile/${user.profile_image}`);
     } else {
@@ -92,6 +148,12 @@ function ManageEmployees() {
     setShowModal(true);
   };
 
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  // Image Handlers
   const handleFileSelect = (e) => {
     const file = e.target.files[0];
     processFile(file);
@@ -130,16 +192,34 @@ function ManageEmployees() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const formData = new FormData(e.target);
+
+    // Basic Validation
+    if (!formData.name_th || !formData.lastname_th || !formData.username) {
+      Swal.fire({
+        icon: "warning",
+        title: "ข้อมูลไม่ครบถ้วน",
+        text: "กรุณากรอกข้อมูลสำคัญ (ชื่อผู้ใช้, ชื่อ-นามสกุล) ให้ครบ",
+        confirmButtonColor: "#1E2A45",
+      });
+      return;
+    }
+
+    const submitData = new FormData();
+    Object.keys(formData).forEach((key) => {
+      if (formData[key] !== null) {
+        submitData.append(key, formData[key]);
+      }
+    });
+
     if (selectedImage) {
-      formData.set("profile_image", selectedImage);
+      submitData.append("profile_image", selectedImage);
     }
 
     try {
-      if (editingUser) {
+      if (formData.id) {
         await axios.put(
-          `${apiUrl}/api/admin/users/${editingUser.id}`,
-          formData,
+          `${apiUrl}/api/admin/users/${formData.id}`,
+          submitData,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -154,7 +234,7 @@ function ManageEmployees() {
           confirmButtonColor: "#1E2A45",
         });
       } else {
-        await axios.post(`${apiUrl}/api/admin/users`, formData, {
+        await axios.post(`${apiUrl}/api/admin/users`, submitData, {
           headers: {
             Authorization: `Bearer ${token}`,
             "Content-Type": "multipart/form-data",
@@ -271,7 +351,6 @@ function ManageEmployees() {
               <tr>
                 <th className="ps-4">พนักงาน</th>
                 <th>สิทธิ์การเข้าถึง</th>
-                {/* เปลี่ยน Header ให้ครอบคลุม Username */}
                 <th>บัญชีผู้ใช้ / อีเมล</th>
                 <th>ตำแหน่งงาน</th>
                 <th className="text-end pe-4">
@@ -331,7 +410,7 @@ function ManageEmployees() {
                       </div>
                     </td>
                     <td>
-                      {u.role === "admin" ? (
+                      {u.role_name === "admin" ? (
                         <div className="role-badge admin">
                           <span className="role-dot"></span> Admin
                         </div>
@@ -343,14 +422,12 @@ function ManageEmployees() {
                     </td>
                     <td>
                       <div className="d-flex flex-column">
-                        {/* แสดง Username สีเข้ม */}
                         <span
                           className="fw-bold text-dark"
                           style={{ fontSize: "0.9rem" }}
                         >
                           {u.username}
                         </span>
-                        {/* แสดง Email สีจางลง */}
                         <span
                           className="text-muted small"
                           style={{ fontFamily: "monospace" }}
@@ -435,7 +512,6 @@ function ManageEmployees() {
                   chevron_left
                 </span>
               </button>
-
               {[...Array(totalPages)].map((_, index) => (
                 <button
                   key={index + 1}
@@ -447,7 +523,6 @@ function ManageEmployees() {
                   {index + 1}
                 </button>
               ))}
-
               <button
                 className="pagination-btn"
                 onClick={() => handlePageChange(currentPage + 1)}
@@ -462,317 +537,292 @@ function ManageEmployees() {
         )}
       </div>
 
-      {/* --- Modal Form --- */}
-      {showModal && (
-        <>
-          <div
-            className="modal-backdrop fade show"
-            style={{
-              zIndex: 1050,
-              backgroundColor: "rgba(30,42,69,0.4)",
-              backdropFilter: "blur(4px)",
-            }}
-          ></div>
-          <div
-            className="modal fade show d-block"
-            tabIndex="-1"
-            style={{ zIndex: 1055 }}
-          >
-            <div className="modal-dialog modal-dialog-centered modal-lg">
-              <div className="modal-content custom-modal-content">
-                <div className="custom-modal-header d-flex justify-content-between align-items-center">
-                  <div>
-                    <h5 className="modal-title fw-bold text-dark">
-                      {editingUser ? "แก้ไขข้อมูลพนักงาน" : "เพิ่มพนักงานใหม่"}
-                    </h5>
-                    <p className="m-0 text-muted small">
-                      {editingUser
-                        ? `กำลังแก้ไขข้อมูลของ: ${editingUser.name_th}`
-                        : "กรอกข้อมูลให้ครบถ้วนเพื่อสร้างบัญชี"}
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    className="btn-close"
-                    onClick={() => setShowModal(false)}
-                  ></button>
+      {/* --- ALL-IN-ONE MODAL FORM --- */}
+      <Modal
+        isOpen={showModal}
+        onClose={() => setShowModal(false)}
+        maxWidth="1100px"
+        icon={formData.id ? "edit_square" : "person_add"}
+        title={
+          <div>
+            <h5 className="fw-bold text-dark m-0">
+              {formData.id ? "แก้ไขข้อมูลพนักงาน" : "เพิ่มพนักงานใหม่"}
+            </h5>
+            <p className="text-muted small m-0 mt-1">
+              กรอกข้อมูลพนักงานให้ครบถ้วนเพื่อบันทึกลงในระบบ
+            </p>
+          </div>
+        }
+      >
+        <form onSubmit={handleSubmit} encType="multipart/form-data">
+          <div className="row g-0">
+            {/* Left Column: Image */}
+            <div className="col-lg-4 bg-soft-gray p-4 border-end d-flex flex-column align-items-center justify-content-start">
+              <div
+                className="text-center w-100 sticky-top"
+                style={{ top: "20px" }}
+              >
+                <h6 className="text-muted fw-bold mb-4">รูปโปรไฟล์</h6>
+
+                {/* แก้ไขตรงนี้: เปลี่ยน className เป็น profile-upload-card */}
+                <div
+                  className={`profile-upload-card ${
+                    isDragActive ? "drag-active" : ""
+                  }`}
+                  onClick={() => fileInputRef.current.click()}
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
+                  onDrop={handleDrop}
+                >
+                  {previewUrl ? (
+                    <img
+                      src={previewUrl}
+                      alt="Preview"
+                      className="profile-preview-img"
+                    />
+                  ) : (
+                    <div className="upload-placeholder-content">
+                      <span
+                        className="material-symbols-rounded"
+                        style={{ fontSize: "48px" }}
+                      >
+                        add_photo_alternate
+                      </span>
+                      <span className="small mt-2 fw-medium">
+                        อัปโหลดรูปภาพ
+                      </span>
+                    </div>
+                  )}
+
+                  {previewUrl && (
+                    <button
+                      type="button"
+                      className="remove-img-mini-btn"
+                      onClick={handleRemoveImage}
+                      title="ลบรูปภาพ"
+                    >
+                      <span className="material-symbols-rounded fs-6">
+                        close
+                      </span>
+                    </button>
+                  )}
+
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    className="d-none"
+                    accept="image/*"
+                    onChange={handleFileSelect}
+                  />
                 </div>
 
-                <div className="modal-body p-4">
-                  <form
-                    key={editingUser ? editingUser.id : "new"}
-                    onSubmit={handleSubmit}
-                    encType="multipart/form-data"
-                  >
-                    <div className="row g-4">
-                      {/* Image Upload Area */}
-                      <div className="col-md-4">
-                        <div className="form-section-title">รูปโปรไฟล์</div>
-                        <div
-                          className={`image-upload-area ${
-                            isDragActive ? "drag-active" : ""
-                          }`}
-                          onClick={() => fileInputRef.current.click()}
-                          onDragOver={handleDragOver}
-                          onDragLeave={handleDragLeave}
-                          onDrop={handleDrop}
-                        >
-                          {previewUrl ? (
-                            <>
-                              <img
-                                src={previewUrl}
-                                alt="Preview"
-                                className="preview-image"
-                              />
-                              <button
-                                type="button"
-                                className="remove-image-btn"
-                                onClick={handleRemoveImage}
-                                title="ลบรูป"
-                              >
-                                <span className="material-symbols-rounded fs-6">
-                                  close
-                                </span>
-                              </button>
-                            </>
-                          ) : (
-                            <div className="upload-placeholder">
-                              <span className="material-symbols-rounded upload-icon">
-                                cloud_upload
-                              </span>
-                              <p className="m-0 small fw-bold text-dark">
-                                คลิก หรือ ลากไฟล์มาวาง
-                              </p>
-                            </div>
-                          )}
-                          <input
-                            type="file"
-                            name="profile_image"
-                            ref={fileInputRef}
-                            className="d-none"
-                            accept="image/*"
-                            onChange={handleFileSelect}
-                          />
-                        </div>
-                      </div>
-                      {/* Personal Info Inputs */}
-                      <div className="col-md-8">
-                        <div className="form-section-title mt-0">
-                          ข้อมูลส่วนตัว (TH)
-                        </div>
-                        <div className="row g-2 mb-3">
-                          <div className="col-md-3">
-                            <select
-                              name="prefix_th"
-                              className="form-select form-control-custom"
-                              defaultValue={editingUser?.prefix_th || "นาย"}
-                            >
-                              <option value="นาย">นาย</option>
-                              <option value="นาง">นาง</option>
-                              <option value="นางสาว">นางสาว</option>
-                            </select>
-                          </div>
-                          <div className="col-md-4">
-                            <input
-                              name="name_th"
-                              className="form-control form-control-custom"
-                              placeholder="ชื่อจริง (ไทย)"
-                              required
-                              defaultValue={editingUser?.name_th}
-                            />
-                          </div>
-                          <div className="col-md-5">
-                            <input
-                              name="lastname_th"
-                              className="form-control form-control-custom"
-                              placeholder="นามสกุล (ไทย)"
-                              required
-                              defaultValue={editingUser?.lastname_th}
-                            />
-                          </div>
-                          <div className="col-md-12 mt-2">
-                            <input
-                              name="nickname_th"
-                              className="form-control form-control-custom"
-                              placeholder="ชื่อเล่น (ไทย)"
-                              defaultValue={editingUser?.nickname_th}
-                            />
-                          </div>
-                        </div>
+                <div className="mt-3 text-muted small">
+                  รองรับไฟล์: JPG, PNG, GIF
+                </div>
+              </div>
+            </div>
+            {/* Right Column: All Forms */}
+            <div className="col-lg-8 p-4 bg-white">
+              {/* 1. System Info */}
+              <h6 className="section-header text-primary mb-3">
+                <span className="material-symbols-rounded align-bottom me-2 fs-5">
+                  manage_accounts
+                </span>
+                ข้อมูลเข้าสู่ระบบ
+              </h6>
+              <div className="row g-3 mb-4">
+                <div className="col-md-4">
+                  <label className="form-label-sm">รหัสพนักงาน</label>
+                  <input
+                    name="emp_code"
+                    className="form-control modern-input"
+                    value={formData.emp_code}
+                    onChange={handleInputChange}
+                    placeholder="เช่น EMP-001"
+                  />
+                </div>
+                <div className="col-md-4">
+                  <label className="form-label-sm">
+                    สิทธิ์การใช้งาน (Role)
+                  </label>
+                  <Dropdown
+                    name="role_id"
+                    value={formData.role_id}
+                    options={roleOptions} // ส่ง Array เข้าไป
+                    onChange={handleInputChange}
+                    placeholder="เลือกสิทธิ์"
+                  />
+                </div>
+                <div className="col-md-4">
+                  <label className="form-label-sm">ตำแหน่งงาน</label>
+                  <input
+                    name="position"
+                    className="form-control modern-input"
+                    value={formData.position}
+                    onChange={handleInputChange}
+                    placeholder="เช่น HR, Dev"
+                  />
+                </div>
+                <div className="col-md-6">
+                  <label className="form-label-sm">
+                    Username <span className="text-danger">*</span>
+                  </label>
+                  <input
+                    name="username"
+                    className="form-control modern-input"
+                    value={formData.username}
+                    onChange={handleInputChange}
+                    required
+                  />
+                </div>
+                <div className="col-md-6">
+                  <label className="form-label-sm">
+                    Password{" "}
+                    {formData.id && (
+                      <span className="text-muted fw-normal">
+                        (เว้นว่างหากไม่เปลี่ยน)
+                      </span>
+                    )}
+                  </label>
+                  <input
+                    type="password"
+                    name="password"
+                    className="form-control modern-input"
+                    value={formData.password}
+                    onChange={handleInputChange}
+                    placeholder={formData.id ? "********" : ""}
+                  />
+                </div>
+                <div className="col-md-12">
+                  <label className="form-label-sm">Email</label>
+                  <input
+                    type="email"
+                    name="email"
+                    className="form-control modern-input"
+                    value={formData.email}
+                    onChange={handleInputChange}
+                  />
+                </div>
+              </div>
 
-                        <div className="form-section-title">
-                          Personal Info (EN)
-                        </div>
-                        <div className="row g-2 mb-3">
-                          <div className="col-md-3">
-                            <select
-                              name="prefix_en"
-                              className="form-select form-control-custom"
-                              defaultValue={editingUser?.prefix_en || "Mr."}
-                            >
-                              <option value="Mr.">Mr.</option>
-                              <option value="Mrs.">Mrs.</option>
-                              <option value="Miss">Miss</option>
-                            </select>
-                          </div>
-                          <div className="col-md-4">
-                            <input
-                              name="name_en"
-                              className="form-control form-control-custom"
-                              placeholder="First Name"
-                              required
-                              defaultValue={editingUser?.name_en}
-                            />
-                          </div>
-                          <div className="col-md-5">
-                            <input
-                              name="lastname_en"
-                              className="form-control form-control-custom"
-                              placeholder="Last Name"
-                              required
-                              defaultValue={editingUser?.lastname_en}
-                            />
-                          </div>
-                          <div className="col-md-12 mt-2">
-                            <input
-                              name="nickname_en"
-                              className="form-control form-control-custom"
-                              placeholder="Nickname (EN)"
-                              defaultValue={editingUser?.nickname_en}
-                            />
-                          </div>
-                        </div>
-                      </div>
-                      {/* System Account Information */}
-                      <div className="col-12">
-                        <div className="form-section-title">
-                          ข้อมูลเข้าระบบ (System)
-                        </div>
-                        <div className="row g-3">
-                          {/* Row 1: Identifiers */}
-                          <div className="col-md-4">
-                            <label className="form-label text-muted small fw-bold">
-                              รหัสพนักงาน <span className="text-danger">*</span>
-                            </label>
-                            <input
-                              name="emp_code"
-                              className="form-control form-control-custom"
-                              placeholder="เช่น 000123"
-                              required
-                              maxLength={6}
-                              defaultValue={editingUser?.emp_code}
-                            />
-                          </div>
+              {/* 2. Personal Info (TH) */}
+              <h6 className="section-header text-primary mb-3 mt-4">
+                <span className="material-symbols-rounded align-bottom me-2 fs-5">
+                  badge
+                </span>
+                ข้อมูลส่วนตัว (ภาษาไทย)
+              </h6>
+              <div className="row g-3 mb-4">
+                <div className="col-md-3">
+                  <label className="form-label-sm">คำนำหน้า</label>
+                  <Dropdown
+                    name="prefix_th"
+                    value={formData.prefix_th}
+                    options={prefixThOptions}
+                    onChange={handleInputChange}
+                  />
+                </div>
+                <div className="col-md-4">
+                  <label className="form-label-sm">
+                    ชื่อจริง <span className="text-danger">*</span>
+                  </label>
+                  <input
+                    name="name_th"
+                    className="form-control modern-input"
+                    value={formData.name_th}
+                    onChange={handleInputChange}
+                    required
+                  />
+                </div>
+                <div className="col-md-5">
+                  <label className="form-label-sm">
+                    นามสกุล <span className="text-danger">*</span>
+                  </label>
+                  <input
+                    name="lastname_th"
+                    className="form-control modern-input"
+                    value={formData.lastname_th}
+                    onChange={handleInputChange}
+                    required
+                  />
+                </div>
+                <div className="col-md-6">
+                  <label className="form-label-sm">ชื่อเล่น</label>
+                  <input
+                    name="nickname_th"
+                    className="form-control modern-input"
+                    value={formData.nickname_th}
+                    onChange={handleInputChange}
+                  />
+                </div>
+              </div>
 
-                          {/* เพิ่มช่อง Username */}
-                          <div className="col-md-4">
-                            <label className="form-label text-muted small fw-bold">
-                              ชื่อผู้ใช้งาน (Username){" "}
-                              <span className="text-danger">*</span>
-                            </label>
-                            <input
-                              name="username"
-                              className="form-control form-control-custom"
-                              placeholder="เช่น somchai.j"
-                              required
-                              defaultValue={editingUser?.username}
-                            />
-                          </div>
-
-                          <div className="col-md-4">
-                            <label className="form-label text-muted small fw-bold">
-                              สิทธิ์การใช้งาน (Role)
-                            </label>
-                            <select
-                              name="role"
-                              className="form-select form-control-custom"
-                              style={{ backgroundImage: "none" }}
-                              defaultValue={editingUser?.role || "user"}
-                            >
-                              <option value="user">User (พนักงานทั่วไป)</option>
-                              <option value="admin">Admin (ผู้ดูแลระบบ)</option>
-                            </select>
-                          </div>
-
-                          {/* Row 2: Login Credentials */}
-                          <div className="col-md-6">
-                            <label className="form-label text-muted small fw-bold">
-                              Email <span className="text-danger">*</span>
-                            </label>
-                            <input
-                              name="email"
-                              type="email"
-                              className="form-control form-control-custom"
-                              placeholder="employee@nite.com"
-                              required
-                              defaultValue={editingUser?.email}
-                            />
-                          </div>
-
-                          <div className="col-md-6">
-                            <label className="form-label text-muted small fw-bold">
-                              Password{" "}
-                              {editingUser && (
-                                <span className="text-danger small fw-normal">
-                                  (เว้นว่างถ้าไม่เปลี่ยน)
-                                </span>
-                              )}
-                            </label>
-                            <input
-                              name="password"
-                              type="password"
-                              className="form-control form-control-custom"
-                              placeholder={
-                                editingUser ? "••••••••" : "กำหนดรหัสผ่าน"
-                              }
-                              required={!editingUser}
-                            />
-                          </div>
-
-                          {/* Row 3: Position */}
-                          <div className="col-md-12">
-                            <label className="form-label text-muted small fw-bold">
-                              ตำแหน่ง (Position)
-                            </label>
-                            <input
-                              name="position"
-                              className="form-control form-control-custom"
-                              placeholder="เช่น Software Engineer, HR Manager"
-                              defaultValue={editingUser?.position}
-                            />
-                          </div>
-                        </div>
-                      </div>{" "}
-                    </div>
-
-                    <div className="d-grid gap-2 mt-4 pt-2">
-                      <button
-                        type="submit"
-                        className="btn btn-primary py-2 fw-bold"
-                        style={{
-                          backgroundColor: "#1E2A45",
-                          border: "none",
-                          borderRadius: "10px",
-                        }}
-                      >
-                        {editingUser ? "บันทึกการแก้ไข" : "สร้างบัญชีพนักงาน"}
-                      </button>
-                      <button
-                        type="button"
-                        className="btn btn-light py-2 text-muted fw-bold"
-                        onClick={() => setShowModal(false)}
-                        style={{ borderRadius: "10px" }}
-                      >
-                        ยกเลิก
-                      </button>
-                    </div>
-                  </form>
+              {/* 3. Personal Info (EN) */}
+              <h6 className="section-header text-primary mb-3 mt-4">
+                <span className="material-symbols-rounded align-bottom me-2 fs-5">
+                  language
+                </span>
+                ข้อมูลส่วนตัว (ภาษาอังกฤษ)
+              </h6>
+              <div className="row g-3">
+                <div className="col-md-3">
+                  <label className="form-label-sm">Prefix</label>
+                  <Dropdown
+                    name="prefix_en"
+                    value={formData.prefix_en}
+                    options={prefixEnOptions}
+                    onChange={handleInputChange}
+                  />
+                </div>
+                <div className="col-md-4">
+                  <label className="form-label-sm">First Name</label>
+                  <input
+                    name="name_en"
+                    className="form-control modern-input"
+                    value={formData.name_en}
+                    onChange={handleInputChange}
+                  />
+                </div>
+                <div className="col-md-5">
+                  <label className="form-label-sm">Last Name</label>
+                  <input
+                    name="lastname_en"
+                    className="form-control modern-input"
+                    value={formData.lastname_en}
+                    onChange={handleInputChange}
+                  />
+                </div>
+                <div className="col-md-6">
+                  <label className="form-label-sm">Nickname (EN)</label>
+                  <input
+                    name="nickname_en"
+                    className="form-control modern-input"
+                    value={formData.nickname_en}
+                    onChange={handleInputChange}
+                  />
                 </div>
               </div>
             </div>
           </div>
-        </>
-      )}
+
+          {/* Footer */}
+          <div className="modern-modal-footer">
+            <div className="d-flex justify-content-end align-items-center w-100 gap-2">
+              <button
+                type="button"
+                className="btn btn-subtle"
+                onClick={() => setShowModal(false)}
+              >
+                ยกเลิก
+              </button>
+              <button type="submit" className="btn btn-save">
+                <span className="material-symbols-rounded">save</span>{" "}
+                บันทึกข้อมูล
+              </button>
+            </div>
+          </div>
+        </form>
+      </Modal>
     </div>
   );
 }
