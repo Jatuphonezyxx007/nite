@@ -1,604 +1,440 @@
 import React, { useState, useEffect } from "react";
+import axios from "axios";
 import Swal from "sweetalert2";
 import "./ManageShifts.css";
+import Modal from "../../components/Modal";
+// Import Component ที่สร้างใหม่
+import ModernColorPicker from "../../components/ColorPicker/ColorPicker";
 
 function ManageShifts() {
+  const [shifts, setShifts] = useState([]);
   const [showModal, setShowModal] = useState(false);
-  const [viewMode, setViewMode] = useState("grid"); // grid, calendar
+  const [isLoading, setIsLoading] = useState(false);
 
-  // --- Initial Form State ---
+  // --- Form State ---
   const initialFormState = {
+    id: null,
     name: "",
-    startTime: "09:00",
-    endTime: "18:00",
-    breakTime: 60, // นาที
-    isOvernight: false, // กะข้ามวัน
-    days: ["Mon", "Tue", "Wed", "Thu", "Fri"],
-    minStaff: 1,
-    maxStaff: 5,
-    roles: ["all"],
-    pattern: "fixed", // fixed, rotation
+    start_time: "09:00",
+    end_time: "18:00",
+    break_minutes: 60,
+    color: "#3b82f6", // Default Blue Hex
+  };
+  const [formData, setFormData] = useState(initialFormState);
+
+  const [calculatedInfo, setCalculatedInfo] = useState({
+    netHours: 0,
+    isOvernight: false,
+  });
+
+  const apiUrl = import.meta.env.VITE_API_URL;
+  const token = localStorage.getItem("token");
+  const config = { headers: { Authorization: `Bearer ${token}` } };
+
+  // Helper Map สำหรับแปลงชื่อสีเก่าใน DB ให้เป็น Hex (กรณีมีข้อมูลเก่า)
+  const legacyColorMap = {
+    blue: "#3b82f6",
+    green: "#10b981",
+    purple: "#8b5cf6",
+    orange: "#f59e0b",
   };
 
-  const [formData, setFormData] = useState(initialFormState);
-  const [calculatedHours, setCalculatedHours] = useState(0);
-  const [warnings, setWarnings] = useState([]);
+  useEffect(() => {
+    fetchShifts();
+  }, []);
 
-  // --- Mock Data: Shifts ---
-  const [shifts, setShifts] = useState([
-    {
-      id: 1,
-      name: "กะเช้า (Morning)",
-      startTime: "08:00",
-      endTime: "17:00",
-      breakTime: 60,
-      netHours: 8,
-      type: "morning",
-      days: ["Mon", "Tue", "Wed", "Thu", "Fri"],
-      staffCount: 12,
-      maxStaff: 15,
-    },
-    {
-      id: 2,
-      name: "กะดึก (Night)",
-      startTime: "22:00",
-      endTime: "07:00",
-      breakTime: 60,
-      netHours: 8,
-      type: "night",
-      isOvernight: true,
-      days: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
-      staffCount: 4,
-      maxStaff: 6,
-    },
-  ]);
+  const fetchShifts = async () => {
+    try {
+      const res = await axios.get(`${apiUrl}/api/admin/shifts`, config);
+      setShifts(res.data);
+    } catch (error) {
+      console.error("Error fetching shifts:", error);
+    }
+  };
 
-  // --- Logic: คำนวณเวลาทำงานและตรวจสอบกฎหมาย ---
   useEffect(() => {
     calculateWorkHours();
-  }, [
-    formData.startTime,
-    formData.endTime,
-    formData.breakTime,
-    formData.isOvernight,
-  ]);
+  }, [formData.start_time, formData.end_time, formData.break_minutes]);
 
   const calculateWorkHours = () => {
-    let start =
-      parseInt(formData.startTime.split(":")[0]) * 60 +
-      parseInt(formData.startTime.split(":")[1]);
-    let end =
-      parseInt(formData.endTime.split(":")[0]) * 60 +
-      parseInt(formData.endTime.split(":")[1]);
+    if (!formData.start_time || !formData.end_time) return;
 
-    // ถ้าเป็นกะข้ามวัน ให้บวก 24 ชม. (1440 นาที) ที่เวลาเลิกงาน
-    // หรือถ้า user ไม่ติ๊ก overnight แต่เวลาเลิกน้อยกว่าเริ่ม ระบบจะ auto detect ว่าข้ามวัน
-    if (end < start || formData.isOvernight) {
+    const start = timeToMinutes(formData.start_time);
+    let end = timeToMinutes(formData.end_time);
+    let isOvernight = false;
+
+    if (end < start) {
       end += 1440;
+      isOvernight = true;
     }
 
     const totalDuration = end - start;
-    const netDuration = totalDuration - formData.breakTime; // ลบเวลาพัก
-    const netHours = netDuration / 60;
+    const netDuration = totalDuration - (parseInt(formData.break_minutes) || 0);
+    const netHours = (netDuration / 60).toFixed(2);
 
-    setCalculatedHours(netHours.toFixed(2));
+    setCalculatedInfo({ netHours, isOvernight });
+  };
 
-    // --- Validation Rules (กฎหมายแรงงานเบื้องต้น) ---
-    const newWarnings = [];
-    if (netHours > 8) {
-      newWarnings.push("⚠️ เวลาทำงานสุทธิเกิน 8 ชั่วโมง (อาจมี OT)");
-    }
-    if (formData.breakTime < 60 && totalDuration >= 300) {
-      // ทำงานเกิน 5 ชม ควรพัก 1 ชม
-      newWarnings.push("⚠️ เวลาพักน้อยกว่า 1 ชั่วโมง (ควรตรวจสอบกฎหมาย)");
-    }
-    if (netHours > 12) {
-      newWarnings.push("⛔ เวลาทำงานนานเกินไป! (เสี่ยงผิดกฎหมายแรงงาน)");
-    }
-    setWarnings(newWarnings);
+  const timeToMinutes = (timeStr) => {
+    const [h, m] = timeStr.split(":").map(Number);
+    return h * 60 + m;
   };
 
   const handleInputChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setFormData({
-      ...formData,
-      [name]: type === "checkbox" ? checked : value,
-    });
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
   };
 
-  const handleDayToggle = (day) => {
-    const currentDays = formData.days;
-    if (currentDays.includes(day)) {
-      setFormData({ ...formData, days: currentDays.filter((d) => d !== day) });
-    } else {
-      setFormData({ ...formData, days: [...currentDays, day] });
+  // Handler สำหรับ ColorPicker Component
+  const handleColorChange = (newColor) => {
+    setFormData({ ...formData, color: newColor });
+  };
+
+  const handleOpenAddModal = () => {
+    setFormData(initialFormState);
+    setShowModal(true);
+  };
+
+  const handleEditClick = (shift) => {
+    // แปลงสีเก่าถ้าจำเป็น
+    let safeColor = shift.color || "#3b82f6";
+    if (!safeColor.startsWith("#") && legacyColorMap[safeColor]) {
+      safeColor = legacyColorMap[safeColor];
+    }
+
+    setFormData({
+      id: shift.id,
+      name: shift.name,
+      start_time: shift.start_time.substring(0, 5),
+      end_time: shift.end_time.substring(0, 5),
+      break_minutes: shift.break_minutes,
+      color: safeColor,
+    });
+    setShowModal(true);
+  };
+
+  const handleDelete = async (id) => {
+    const result = await Swal.fire({
+      title: "ยืนยันการลบ?",
+      text: "ข้อมูลกะงานนี้จะหายไปจากระบบ",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "ยืนยันลบ",
+      cancelButtonText: "ยกเลิก",
+      confirmButtonColor: "#ef4444",
+      cancelButtonColor: "#E5E7EB",
+    });
+
+    if (result.isConfirmed) {
+      try {
+        await axios.delete(`${apiUrl}/api/admin/shifts/${id}`, config);
+        Swal.fire("เรียบร้อย", "ลบข้อมูลสำเร็จ", "success");
+        fetchShifts();
+      } catch (error) {
+        Swal.fire("Error", "ไม่สามารถลบข้อมูลได้", "error");
+      }
     }
   };
 
-  const handleSave = () => {
-    // Save Logic here
-    Swal.fire({
-      icon: "success",
-      title: "บันทึกเรียบร้อย",
-      text: `สร้างกะ "${formData.name}" สำเร็จ`,
-      confirmButtonColor: "#0d6efd",
-    });
-    setShowModal(false);
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setIsLoading(true);
+
+    try {
+      if (formData.id) {
+        await axios.put(
+          `${apiUrl}/api/admin/shifts/${formData.id}`,
+          formData,
+          config
+        );
+        Swal.fire({
+          icon: "success",
+          title: "อัปเดตสำเร็จ",
+          timer: 1500,
+          showConfirmButton: false,
+        });
+      } else {
+        await axios.post(`${apiUrl}/api/admin/shifts`, formData, config);
+        Swal.fire({
+          icon: "success",
+          title: "สร้างสำเร็จ",
+          timer: 1500,
+          showConfirmButton: false,
+        });
+      }
+      fetchShifts();
+      setShowModal(false);
+    } catch (error) {
+      console.error(error);
+      Swal.fire("Error", "เกิดข้อผิดพลาดในการบันทึก", "error");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  // Helper to get class based on time
-  const getShiftTypeClass = (start) => {
-    const hour = parseInt(start.split(":")[0]);
-    if (hour >= 6 && hour < 12) return "morning";
-    if (hour >= 12 && hour < 18) return "afternoon";
-    return "night";
+  // Helper เพื่อดึงสีที่ปลอดภัย
+  const getSafeColor = (color) => {
+    if (!color) return "#3b82f6";
+    if (color.startsWith("#")) return color;
+    return legacyColorMap[color] || color;
   };
 
   return (
     <div className="manage-shifts-container p-4 fade-in">
-      {/* 1. Header */}
-      <div className="page-header">
-        <div className="header-title">
-          <h2>
-            <span className="material-symbols-rounded fs-2 text-primary">
-              {" "}
-              {/* Updated */}
-              schedule
+      {/* Header */}
+      <div className="page-header d-flex flex-column flex-md-row justify-content-between align-items-center mb-5 gap-3">
+        <div>
+          <h2 className="fw-bold text-dark m-0 d-flex align-items-center gap-2">
+            Work Shifts{" "}
+            <span
+              style={{ color: "#FFBD28", fontSize: "1.5em", lineHeight: 0 }}
+            >
+              .
             </span>
-            Shift Management
           </h2>
           <p className="text-muted m-0 mt-1">
-            จัดการกะเวลาทำงาน รูปแบบวันทำงาน และข้อกำหนดแรงงาน
+            จัดการรอบเวลาและกะการทำงานของพนักงาน
           </p>
         </div>
-
-        <div className="d-flex gap-2">
-          {/* View Toggle */}
-          <div className="btn-group bg-white border rounded-3 p-1">
-            <button
-              className={`btn btn-sm ${
-                viewMode === "grid" ? "btn-primary" : "btn-light"
-              }`}
-              onClick={() => setViewMode("grid")}
-            >
-              <span className="material-symbols-rounded align-middle fs-6 me-1">
-                {" "}
-                {/* Updated */}
-                grid_view
-              </span>{" "}
-              Grid
-            </button>
-            <button
-              className={`btn btn-sm ${
-                viewMode === "calendar" ? "btn-primary" : "btn-light"
-              }`}
-              onClick={() => setViewMode("calendar")}
-            >
-              <span className="material-symbols-rounded align-middle fs-6 me-1">
-                {" "}
-                {/* Updated */}
-                calendar_month
-              </span>{" "}
-              Calendar
-            </button>
-          </div>
-
-          <button
-            className="btn btn-modern-primary d-flex align-items-center gap-2"
-            onClick={() => {
-              setFormData(initialFormState);
-              setShowModal(true);
-            }}
-          >
-            <span className="material-symbols-rounded">add_circle</span>{" "}
-            {/* Updated */}
-            สร้างกะใหม่
-          </button>
-        </div>
+        <button className="btn-add-employee" onClick={handleOpenAddModal}>
+          <span className="material-symbols-rounded fs-5">add_circle</span>
+          <span>สร้างกะใหม่</span>
+        </button>
       </div>
 
-      {/* 2. Shifts Grid View */}
-      {viewMode === "grid" && (
-        <div className="shifts-grid">
-          {shifts.map((shift) => (
-            <div key={shift.id} className={`shift-card ${shift.type}`}>
-              <div className="shift-header">
-                <span className="shift-name">{shift.name}</span>
-                <span className="shift-badge">{shift.netHours} Hrs / Day</span>
+      {/* Grid View */}
+      <div className="shifts-grid">
+        {shifts.map((shift) => {
+          const displayColor = getSafeColor(shift.color);
+          return (
+            <div
+              key={shift.id}
+              className="shift-card"
+              style={{ borderLeft: `6px solid ${displayColor}` }}
+            >
+              {/* Header & Title */}
+              <div className="shift-header d-flex justify-content-between align-items-start">
+                <div>
+                  <h5 className="fw-bold m-0 text-dark">{shift.name}</h5>
+                  <span
+                    className="badge rounded-pill mt-2 fw-normal"
+                    style={{
+                      backgroundColor: displayColor,
+                      color: "#fff",
+                      letterSpacing: "0.5px",
+                      // Shadow เพื่อให้อ่านง่ายขึ้น
+                      textShadow: "0 1px 2px rgba(0,0,0,0.2)",
+                    }}
+                  >
+                    {/* แสดงค่า Hex หรือชื่อสีออกมาเลย */}
+                    {shift.color ? shift.color.toUpperCase() : "NO COLOR"}
+                  </span>
+                </div>
               </div>
 
-              <div className="shift-time-row">
-                <div className="time-box">
-                  <span className="time-label">Start</span>
-                  <span className="time-value">{shift.startTime}</span>
+              {/* Time Display */}
+              <div className="shift-time-row d-flex align-items-center justify-content-between">
+                <div className="text-center flex-grow-1">
+                  <span className="time-label">START TIME</span>
+                  <span className="time-value">
+                    {shift.start_time.substring(0, 5)}
+                  </span>
                 </div>
-                <span className="material-symbols-rounded text-muted">
-                  {" "}
-                  {/* Updated */}
-                  arrow_forward
-                </span>
-                <div className="time-box">
-                  <span className="time-label">End</span>
-                  <span className="time-value">{shift.endTime}</span>
-                  {shift.isOvernight && (
-                    <small
-                      className="text-danger d-block"
-                      style={{ fontSize: "0.6rem" }}
-                    >
-                      +1 Day
-                    </small>
+
+                <div className="text-muted d-flex align-items-center px-2">
+                  <span className="material-symbols-rounded fs-4 opacity-50">
+                    arrow_right_alt
+                  </span>
+                </div>
+
+                <div className="text-center flex-grow-1">
+                  <span className="time-label">END TIME</span>
+                  <span className="time-value">
+                    {shift.end_time.substring(0, 5)}
+                  </span>
+                </div>
+              </div>
+
+              {/* Break Time */}
+              <div className="d-flex mb-3">
+                <div className="break-badge d-flex align-items-center gap-2">
+                  <span className="material-symbols-rounded fs-6 text-warning">
+                    local_cafe
+                  </span>
+                  <span>พัก {shift.break_minutes} นาที</span>
+                </div>
+              </div>
+
+              {/* Bottom Actions */}
+              <div className="action-buttons-container d-flex gap-2">
+                <button
+                  className="btn-action edit flex-fill d-flex align-items-center justify-content-center gap-2"
+                  onClick={() => handleEditClick(shift)}
+                >
+                  <span className="material-symbols-rounded fs-5">
+                    edit_square
+                  </span>
+                  <span>แก้ไข</span>
+                </button>
+
+                <button
+                  className="btn-action delete flex-fill d-flex align-items-center justify-content-center gap-2"
+                  onClick={() => handleDelete(shift.id)}
+                >
+                  <span className="material-symbols-rounded fs-5">delete</span>
+                  <span>ลบ</span>
+                </button>
+              </div>
+            </div>
+          );
+        })}
+
+        {shifts.length === 0 && (
+          <div className="col-12 py-5 text-center">
+            <div className="d-inline-flex align-items-center justify-content-center bg-white p-4 rounded-circle shadow-sm mb-3">
+              <span className="material-symbols-rounded fs-1 text-muted opacity-50">
+                schedule
+              </span>
+            </div>
+            <h5 className="text-muted fw-normal">ยังไม่มีข้อมูลกะการทำงาน</h5>
+          </div>
+        )}
+      </div>
+
+      {/* --- Modal Form --- */}
+      <Modal
+        isOpen={showModal}
+        onClose={() => setShowModal(false)}
+        title={formData.id ? "แก้ไขกะการทำงาน" : "สร้างกะใหม่"}
+        icon={formData.id ? "edit_calendar" : "add_task"}
+        maxWidth="600px"
+      >
+        <form onSubmit={handleSubmit}>
+          <div className="p-4">
+            <div className="mb-4">
+              <label className="form-label-sm">
+                ชื่อกะงาน <span className="text-danger">*</span>
+              </label>
+              <input
+                className="form-control modern-input mb-3"
+                name="name"
+                value={formData.name}
+                onChange={handleInputChange}
+                placeholder="เช่น กะเช้า, กะดึก (Overnight)"
+                required
+              />
+
+              <label className="form-label-sm mb-2">ธีมสี (Color Theme)</label>
+
+              {/* ใช้ Component ModernColorPicker ที่สร้างใหม่ */}
+              <ModernColorPicker
+                color={formData.color}
+                onChange={handleColorChange}
+              />
+            </div>
+
+            <div className="bg-soft-gray p-4 rounded-4 border-0">
+              <div className="row g-3">
+                <div className="col-6">
+                  <label className="form-label-sm text-muted">
+                    เวลาเข้างาน
+                  </label>
+                  <input
+                    type="time"
+                    className="form-control modern-input fw-bold text-dark"
+                    name="start_time"
+                    value={formData.start_time}
+                    onChange={handleInputChange}
+                    required
+                  />
+                </div>
+                <div className="col-6">
+                  <label className="form-label-sm text-muted">
+                    เวลาเลิกงาน
+                  </label>
+                  <input
+                    type="time"
+                    className="form-control modern-input fw-bold text-dark"
+                    name="end_time"
+                    value={formData.end_time}
+                    onChange={handleInputChange}
+                    required
+                  />
+                </div>
+                <div className="col-12">
+                  <label className="form-label-sm text-muted">
+                    พักเบรค (นาที)
+                  </label>
+                  <div className="input-group">
+                    <input
+                      type="number"
+                      className="form-control modern-input fw-bold text-dark"
+                      name="break_minutes"
+                      value={formData.break_minutes}
+                      onChange={handleInputChange}
+                      min="0"
+                    />
+                    <span className="input-group-text bg-white border-0 text-muted ms-1 rounded-3 small">
+                      นาที
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-4 pt-3 border-top border-secondary-subtle d-flex justify-content-between align-items-center">
+                <div>
+                  {calculatedInfo.isOvernight && (
+                    <span className="badge bg-danger-subtle text-danger border border-danger-subtle px-3 py-2 rounded-3">
+                      <span className="material-symbols-rounded fs-6 align-middle me-1">
+                        dark_mode
+                      </span>
+                      กะข้ามวัน (+1 Day)
+                    </span>
                   )}
                 </div>
-              </div>
-
-              <div className="shift-details">
-                <div className="detail-tag">
-                  <span className="material-symbols-rounded fs-6">coffee</span>{" "}
-                  {/* Updated */}
-                  พัก {shift.breakTime} น.
+                <div className="text-end">
+                  <span className="text-muted small me-2 d-block">
+                    ชั่วโมงทำงานสุทธิ
+                  </span>
+                  <span className="fw-bold fs-3 text-primary lh-1">
+                    {calculatedInfo.netHours}
+                  </span>
+                  <span className="text-muted small ms-1">ชม.</span>
                 </div>
-                <div className="detail-tag">
-                  <span className="material-symbols-rounded fs-6">group</span>{" "}
-                  {/* Updated */}
-                  {shift.staffCount}/{shift.maxStaff} คน
-                </div>
-                <div className="detail-tag">
-                  <span className="material-symbols-rounded fs-6">
-                    {" "}
-                    {/* Updated */}
-                    calendar_today
-                  </span>{" "}
-                  {shift.days.length} วัน/สัปดาห์
-                </div>
-              </div>
-
-              <div className="shift-actions">
-                <button
-                  className="btn btn-light w-100 btn-sm text-primary fw-bold"
-                  onClick={() => setShowModal(true)}
-                >
-                  <span className="material-symbols-rounded align-middle me-1">
-                    {" "}
-                    {/* Updated */}
-                    edit
-                  </span>{" "}
-                  แก้ไข
-                </button>
-                <button className="btn btn-light w-100 btn-sm text-danger fw-bold">
-                  <span className="material-symbols-rounded align-middle me-1">
-                    {" "}
-                    {/* Updated */}
-                    delete
-                  </span>{" "}
-                  ลบ
-                </button>
               </div>
             </div>
-          ))}
-        </div>
-      )}
-
-      {/* 3. Calendar View (Placeholder UI) */}
-      {viewMode === "calendar" && (
-        <div className="card border-0 shadow-sm p-5 text-center rounded-4">
-          <span
-            className="material-symbols-rounded text-muted" // Updated
-            style={{ fontSize: "64px" }}
-          >
-            calendar_month
-          </span>
-          <h4 className="mt-3 fw-bold text-dark">Shift Calendar View</h4>
-          <p className="text-muted">
-            แสดงปฏิทินแบบ Drag & Drop สำหรับจัดกะพนักงานรายวัน (แสดงผลจำลอง)
-          </p>
-          <div className="alert alert-info d-inline-block mx-auto">
-            <small>
-              ในส่วนนี้จะเป็นการนำ FullCalendar.js มา Implement
-              เพื่อให้ลากวางกะได้จริง
-            </small>
           </div>
-        </div>
-      )}
 
-      {/* 4. Modal Form (The Core Feature) */}
-      {showModal && (
-        <>
-          <div
-            className="modal-backdrop fade show"
-            style={{
-              zIndex: 1050,
-              backgroundColor: "rgba(30,42,69,0.5)",
-              backdropFilter: "blur(5px)",
-            }}
-          ></div>
-          <div
-            className="modal fade show d-block"
-            tabIndex="-1"
-            style={{ zIndex: 1055 }}
-          >
-            <div className="modal-dialog modal-dialog-centered modal-lg">
-              <div className="modal-content border-0 shadow-lg rounded-4">
-                <div className="modal-header border-bottom-0 pb-0">
-                  <h5 className="modal-title fw-bold text-dark d-flex align-items-center gap-2">
-                    <span className="material-symbols-rounded text-primary">
-                      {" "}
-                      {/* Updated */}
-                      tune
-                    </span>
-                    ตั้งค่ากะการทำงาน (Configure Shift)
-                  </h5>
-                  <button
-                    type="button"
-                    className="btn-close"
-                    onClick={() => setShowModal(false)}
-                  ></button>
-                </div>
-
-                <div className="modal-body p-4">
-                  <form>
-                    <div className="row g-4">
-                      {/* 1. Basic Info */}
-                      <div className="col-12">
-                        <div className="form-section-title">
-                          <span className="material-symbols-rounded fs-6">
-                            {" "}
-                            {/* Updated */}
-                            badge
-                          </span>{" "}
-                          ข้อมูลทั่วไป
-                        </div>
-                        <div className="row g-3">
-                          <div className="col-md-8">
-                            <label className="form-label small fw-bold text-muted">
-                              ชื่อกะงาน
-                            </label>
-                            <input
-                              type="text"
-                              className="form-control"
-                              name="name"
-                              value={formData.name}
-                              onChange={handleInputChange}
-                              placeholder="เช่น กะเช้า A, กะดึกพิเศษ"
-                            />
-                          </div>
-                          <div className="col-md-4">
-                            <label className="form-label small fw-bold text-muted">
-                              รูปแบบเวร
-                            </label>
-                            <select
-                              className="form-select"
-                              name="pattern"
-                              value={formData.pattern}
-                              onChange={handleInputChange}
-                            >
-                              <option value="fixed">ประจำ (Fixed)</option>
-                              <option value="rotation">
-                                หมุนเวียน (Rotation)
-                              </option>
-                            </select>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* 2. Time Settings & Calculation */}
-                      <div className="col-12">
-                        <div className="form-section-title">
-                          <span className="material-symbols-rounded fs-6">
-                            {" "}
-                            {/* Updated */}
-                            schedule
-                          </span>{" "}
-                          เวลาทำงาน
-                        </div>
-                        <div className="p-3 bg-light rounded-3 border">
-                          <div className="row align-items-end g-3">
-                            <div className="col-md-3">
-                              <label className="form-label small fw-bold">
-                                เริ่มงาน
-                              </label>
-                              <input
-                                type="time"
-                                className="form-control fw-bold"
-                                name="startTime"
-                                value={formData.startTime}
-                                onChange={handleInputChange}
-                              />
-                            </div>
-                            <div className="col-md-3">
-                              <label className="form-label small fw-bold">
-                                เลิกงาน
-                              </label>
-                              <input
-                                type="time"
-                                className="form-control fw-bold"
-                                name="endTime"
-                                value={formData.endTime}
-                                onChange={handleInputChange}
-                              />
-                            </div>
-                            <div className="col-md-3">
-                              <label className="form-label small fw-bold">
-                                พัก (นาที)
-                              </label>
-                              <input
-                                type="number"
-                                className="form-control"
-                                name="breakTime"
-                                value={formData.breakTime}
-                                onChange={handleInputChange}
-                              />
-                            </div>
-                            <div className="col-md-3">
-                              <div className="form-check form-switch mb-2">
-                                <input
-                                  className="form-check-input"
-                                  type="checkbox"
-                                  name="isOvernight"
-                                  checked={formData.isOvernight}
-                                  onChange={handleInputChange}
-                                  id="overnightSwitch"
-                                />
-                                <label
-                                  className="form-check-label small"
-                                  htmlFor="overnightSwitch"
-                                >
-                                  กะข้ามวัน
-                                </label>
-                              </div>
-                            </div>
-                          </div>
-
-                          {/* Auto Calculation Result */}
-                          <div className="mt-3 d-flex align-items-center justify-content-between border-top pt-3">
-                            <span className="text-muted small">
-                              คำนวณอัตโนมัติ:
-                            </span>
-                            <div className="text-end">
-                              <span className="fs-5 fw-bold text-primary">
-                                {calculatedHours}
-                              </span>
-                              <span className="small text-muted ms-1">
-                                ชม. (สุทธิ)
-                              </span>
-                            </div>
-                          </div>
-
-                          {/* Alerts based on Labor Law */}
-                          {warnings.length > 0 && (
-                            <div className="mt-2">
-                              {warnings.map((warn, idx) => (
-                                <div
-                                  key={idx}
-                                  className="alert-modern warning p-2 mt-1"
-                                >
-                                  <span className="material-symbols-rounded">
-                                    {" "}
-                                    {/* Updated */}
-                                    warning
-                                  </span>{" "}
-                                  {warn}
-                                </div>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* 3. Work Days Pattern */}
-                      <div className="col-12">
-                        <div className="form-section-title">
-                          <span className="material-symbols-rounded fs-6">
-                            {" "}
-                            {/* Updated */}
-                            calendar_today
-                          </span>{" "}
-                          วันทำงาน
-                        </div>
-                        <div className="day-selector">
-                          {[
-                            "Mon",
-                            "Tue",
-                            "Wed",
-                            "Thu",
-                            "Fri",
-                            "Sat",
-                            "Sun",
-                          ].map((day) => (
-                            <label key={day} className="day-chk-label">
-                              <input
-                                type="checkbox"
-                                className="day-chk-input"
-                                checked={formData.days.includes(day)}
-                                onChange={() => handleDayToggle(day)}
-                              />
-                              <div className="day-chk-box">{day}</div>
-                            </label>
-                          ))}
-                        </div>
-                      </div>
-
-                      {/* 4. Staff Control */}
-                      <div className="col-12">
-                        <div className="form-section-title">
-                          <span className="material-symbols-rounded fs-6">
-                            {" "}
-                            {/* Updated */}
-                            group_add
-                          </span>{" "}
-                          ควบคุมพนักงาน
-                        </div>
-                        <div className="row g-3">
-                          <div className="col-md-4">
-                            <label className="form-label small fw-bold text-muted">
-                              ขั้นต่ำ (คน)
-                            </label>
-                            <input
-                              type="number"
-                              className="form-control"
-                              name="minStaff"
-                              value={formData.minStaff}
-                              onChange={handleInputChange}
-                            />
-                          </div>
-                          <div className="col-md-4">
-                            <label className="form-label small fw-bold text-muted">
-                              สูงสุด (คน)
-                            </label>
-                            <input
-                              type="number"
-                              className="form-control"
-                              name="maxStaff"
-                              value={formData.maxStaff}
-                              onChange={handleInputChange}
-                            />
-                          </div>
-                          <div className="col-md-4">
-                            <label className="form-label small fw-bold text-muted">
-                              เฉพาะตำแหน่ง
-                            </label>
-                            <select
-                              className="form-select"
-                              name="roles"
-                              onChange={() => {}}
-                            >
-                              <option value="all">ทุกตำแหน่ง</option>
-                              <option value="security">รปภ.</option>
-                              <option value="nurse">พยาบาล</option>
-                              <option value="engineer">วิศวกร</option>
-                            </select>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </form>
-                </div>
-
-                <div className="modal-footer border-top-0 pt-0 pb-4 pe-4">
-                  <button
-                    type="button"
-                    className="btn btn-light rounded-3 fw-bold text-muted"
-                    onClick={() => setShowModal(false)}
-                  >
-                    ยกเลิก
-                  </button>
-                  <button
-                    type="button"
-                    className="btn btn-modern-primary rounded-3"
-                    onClick={handleSave}
-                  >
-                    <span className="material-symbols-rounded align-middle fs-6 me-1">
-                      {" "}
-                      {/* Updated */}
-                      save
-                    </span>{" "}
+          <div className="modern-modal-footer">
+            <div className="d-flex justify-content-end gap-2">
+              <button
+                type="button"
+                className="btn btn-subtle"
+                onClick={() => setShowModal(false)}
+              >
+                ยกเลิก
+              </button>
+              <button
+                type="submit"
+                className="btn btn-save"
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <>
+                    <span className="spinner-border spinner-border-sm me-2"></span>
+                    กำลังบันทึก...
+                  </>
+                ) : (
+                  <>
+                    <span className="material-symbols-rounded me-1">save</span>
                     บันทึกข้อมูล
-                  </button>
-                </div>
-              </div>
+                  </>
+                )}
+              </button>
             </div>
           </div>
-        </>
-      )}
+        </form>
+      </Modal>
     </div>
   );
 }

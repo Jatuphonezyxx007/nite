@@ -3,236 +3,301 @@
 
 .manage-shifts-container {
   font-family: "Kanit", sans-serif;
-  background-color: #f8f9fa;
+  background-color: #f3f4f6;
   min-height: 100vh;
-  padding-bottom: 40px;
-  color: #1e2a45;
+  padding-bottom: 60px;
+  color: #334155;
 }
 
 /* --- Header --- */
 .page-header {
-  background: white;
-  padding: 24px;
-  border-radius: 20px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(10px);
+  padding: 24px 30px;
+  border-radius: 24px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
   margin-bottom: 30px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 15px;
+  border: 1px solid rgba(255, 255, 255, 0.5);
 }
 
-.header-title h2 {
-  font-weight: 700;
-  color: #1e2a45;
-  margin: 0;
+.btn-add-employee {
+  background: linear-gradient(135deg, #1e2a45 0%, #2c3e50 100%);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 14px;
+  font-weight: 500;
+  box-shadow: 0 4px 15px rgba(30, 42, 69, 0.15);
+  transition: all 0.3s ease;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
+  letter-spacing: 0.3px;
+}
+
+.btn-add-employee:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(30, 42, 69, 0.25);
+  background: linear-gradient(135deg, #152035 0%, #1e2a45 100%);
 }
 
 /* --- Shift Card Grid --- */
 .shifts-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
   gap: 24px;
 }
 
 .shift-card {
   background: white;
-  border-radius: 20px;
+  border-radius: 24px;
   padding: 24px;
-  border: 1px solid #e2e8f0;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  /* borderLeft จะถูกคุมด้วย Inline Style ใน JS */
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.06);
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   position: relative;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 .shift-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
-  border-color: #cbd5e1;
+  transform: translateY(-8px);
+  box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.12);
 }
 
-/* แถบสีด้านซ้ายบ่งบอกช่วงเวลา */
-.shift-card::before {
+/* Header ในการ์ด */
+.shift-header {
+  margin-bottom: 20px;
+}
+
+.shift-header h5 {
+  font-size: 1.25rem;
+  letter-spacing: -0.5px;
+  color: #0f172a;
+}
+
+/* Badge สี */
+.badge.rounded-pill {
+  font-size: 0.7rem;
+  padding: 6px 12px;
+  letter-spacing: 0.5px;
+  font-weight: 600;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1); /* เพิ่มเงาตัวหนังสือให้อ่านง่ายบนพื้นสี */
+}
+
+/* --- Time Display Area --- */
+.shift-time-row {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  padding: 20px;
+  border-radius: 18px;
+  margin-bottom: 20px;
+  position: relative;
+}
+
+.shift-time-row::before {
   content: "";
   position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 6px;
-  background: #cbd5e1;
-}
-
-.shift-card.morning::before {
-  background: linear-gradient(to bottom, #10b981, #34d399);
-}
-.shift-card.afternoon::before {
-  background: linear-gradient(to bottom, #f59e0b, #fbbf24);
-}
-.shift-card.night::before {
-  background: linear-gradient(to bottom, #6366f1, #818cf8);
-}
-
-.shift-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 16px;
-}
-
-.shift-name {
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: #1e2a45;
-}
-
-.shift-badge {
-  font-size: 0.75rem;
-  padding: 4px 10px;
-  border-radius: 20px;
-  font-weight: 600;
-  background: #f1f5f9;
-  color: #64748b;
-  text-transform: uppercase;
-}
-
-.shift-time-row {
-  display: flex;
-  align-items: center;
-  gap: 15px;
-  margin-bottom: 16px;
-}
-
-.time-box {
-  background: #f8fafc;
-  padding: 8px 12px;
-  border-radius: 10px;
-  border: 1px solid #e2e8f0;
-  text-align: center;
+  left: 50%;
+  top: 15%;
+  bottom: 15%;
+  width: 1px;
+  border-left: 2px dashed #cbd5e1;
+  transform: translateX(-50%);
+  opacity: 0.5;
 }
 
 .time-label {
   font-size: 0.7rem;
+  font-weight: 600;
   color: #94a3b8;
+  letter-spacing: 1px;
+  margin-bottom: 4px;
   display: block;
-  margin-bottom: 2px;
-  text-transform: uppercase;
 }
 
 .time-value {
-  font-size: 1.1rem;
+  font-size: 1.6rem;
   font-weight: 700;
-  color: #1e2a45;
-  font-family: monospace; /* ให้ตัวเลขดู Tech */
+  color: #334155;
+  line-height: 1;
+  font-feature-settings: "tnum";
+  font-variant-numeric: tabular-nums;
 }
 
-.shift-details {
+/* --- Break Time Badge --- */
+.break-badge {
+  background-color: #fff;
+  border: 1px dashed #cbd5e1 !important;
+  color: #64748b;
+  font-weight: 500;
+  padding: 8px 14px;
+  border-radius: 12px;
+  width: fit-content;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.02);
+}
+
+/* --- Action Buttons --- */
+.action-buttons-container {
+  margin-top: auto;
+  padding-top: 20px;
+  border-top: 1px solid #f1f5f9;
+}
+
+.btn-action {
+  border: none;
+  border-radius: 12px;
+  padding: 10px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  transition: all 0.2s;
+  background-color: #f8fafc;
+}
+
+.btn-action:hover {
+  background-color: #e2e8f0;
+  transform: translateY(-2px);
+}
+
+.btn-action.edit {
+  color: #3b82f6;
+  background-color: #eff6ff;
+}
+.btn-action.edit:hover {
+  background-color: #dbeafe;
+}
+
+.btn-action.delete {
+  color: #ef4444;
+  background-color: #fef2f2;
+}
+.btn-action.delete:hover {
+  background-color: #fee2e2;
+}
+
+/* --- Modal Inputs --- */
+.modern-input {
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 12px;
+  transition: all 0.2s;
+}
+.modern-input:focus {
+  background-color: #fff;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+  outline: none;
+}
+
+.bg-soft-gray {
+  background-color: #f8fafc !important;
+  border: 1px solid #e2e8f0 !important;
+}
+
+/* =========================================
+   NEW: Custom Color Picker Styles
+   ========================================= */
+.color-picker-container {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 16px;
   display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 20px;
+  flex-direction: column;
+  gap: 12px;
 }
 
-.detail-tag {
-  font-size: 0.8rem;
-  padding: 4px 10px;
-  background: #f1f5f9;
-  border-radius: 6px;
-  color: #475569;
+/* ส่วนแสดงผลและเลือกสีหลัก */
+.color-input-wrapper {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 12px;
+  cursor: pointer;
+  background: #f8fafc;
+  padding: 8px;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  transition: all 0.2s;
 }
 
-.shift-actions {
+.color-input-wrapper:hover {
+  border-color: #cbd5e1;
+  background: #f1f5f9;
+}
+
+/* ตัว input type="color" จริงๆ ซ่อนไว้ */
+.hidden-color-input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+/* วงกลมแสดงสีปัจจุบัน */
+.current-color-preview {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  border: 2px solid white;
+  outline: 1px solid #e2e8f0;
+  transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.color-input-wrapper:active .current-color-preview {
+  transform: scale(0.9);
+}
+
+.hex-code-display {
+  font-family: monospace;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #475569;
+  letter-spacing: 0.5px;
+}
+
+/* Preset Colors Row */
+.preset-colors-row {
   display: flex;
   gap: 10px;
-  border-top: 1px solid #f1f5f9;
-  padding-top: 16px;
-}
-
-/* --- Modal Form Styles --- */
-.form-section-title {
-  font-size: 0.9rem;
-  font-weight: 700;
-  color: #0d6efd;
-  margin-bottom: 15px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: #eff6ff;
-  padding: 8px 12px;
-  border-radius: 8px;
-}
-
-.day-selector {
-  display: flex;
-  gap: 8px;
   flex-wrap: wrap;
 }
 
-.day-chk-label {
+.preset-color-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 2px solid white;
+  box-shadow: 0 0 0 1px #e2e8f0;
   cursor: pointer;
-  flex: 1;
-}
-
-.day-chk-input {
-  display: none;
-}
-
-.day-chk-box {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 10px;
-  border: 1px solid #e2e8f0;
-  border-radius: 10px;
-  font-weight: 600;
-  color: #64748b;
-  transition: all 0.2s;
-  font-size: 0.9rem;
-}
-
-.day-chk-input:checked + .day-chk-box {
-  background: #0d6efd;
-  color: white;
-  border-color: #0d6efd;
-  box-shadow: 0 4px 10px rgba(13, 110, 253, 0.3);
-}
-
-.alert-modern {
-  border-radius: 12px;
-  border: none;
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  font-size: 0.9rem;
-}
-
-.alert-modern.warning {
-  background: #fffbeb;
-  color: #92400e;
-}
-
-.btn-modern {
-  border-radius: 10px;
-  padding: 10px 20px;
-  font-weight: 600;
   transition: all 0.2s;
 }
 
-.btn-modern-primary {
-  background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);
-  color: white;
-  border: none;
-  box-shadow: 0 4px 12px rgba(13, 110, 253, 0.3);
-}
-
-.btn-modern-primary:hover {
+.preset-color-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(13, 110, 253, 0.4);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.preset-color-btn.active {
+  transform: scale(1.1);
+  box-shadow: 0 0 0 2px #3b82f6; /* Active ring */
+}
+
+/* Animation */
+.fade-in {
+  animation: fadeIn 0.5s ease-out forwards;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }

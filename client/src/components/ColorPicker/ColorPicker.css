@@ -1,0 +1,152 @@
+/* src/components/ColorPicker/ColorPicker.css */
+.modern-cp-container {
+  position: relative;
+  width: 100%;
+}
+
+/* --- Trigger Button --- */
+.modern-cp-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 10px 14px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  user-select: none;
+}
+
+.modern-cp-trigger:hover {
+  border-color: #cbd5e1;
+  background-color: #f8fafc;
+}
+
+.modern-cp-trigger.open {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.cp-preview-circle {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 2px solid #ffffff;
+  box-shadow: 0 0 0 1px #e2e8f0;
+  margin-right: 12px;
+}
+
+.cp-hex-text {
+  font-family: monospace;
+  font-weight: 600;
+  color: #334155;
+  font-size: 0.95rem;
+  letter-spacing: 0.5px;
+}
+
+/* --- Popover Panel --- */
+.modern-cp-popover {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  width: 100%;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1),
+    0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  padding: 16px;
+  z-index: 100;
+  animation: cpSlideDown 0.2s ease-out forwards;
+  transform-origin: top center;
+}
+
+@keyframes cpSlideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Presets Grid */
+.cp-label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #94a3b8;
+  margin-bottom: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.cp-presets-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(32px, 1fr));
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.cp-preset-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: transform 0.1s;
+  position: relative;
+}
+
+.cp-preset-btn:hover {
+  transform: scale(1.1);
+  z-index: 2;
+}
+
+.cp-preset-btn.active {
+  border-color: #3b82f6;
+  transform: scale(1.1);
+}
+
+/* Custom Input Area */
+.cp-custom-area {
+  padding-top: 12px;
+  border-top: 1px solid #f1f5f9;
+}
+
+.cp-custom-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px;
+  background-color: #f1f5f9;
+  border-radius: 8px;
+  border: 1px dashed #cbd5e1;
+  color: #64748b;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+}
+
+.cp-custom-trigger:hover {
+  background-color: #e2e8f0;
+  color: #334155;
+}
+
+/* ซ่อน Native Input ไว้เต็มพื้นที่ปุ่ม */
+.cp-native-input {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
