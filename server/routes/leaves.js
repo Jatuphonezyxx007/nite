@@ -73,10 +73,29 @@ router.get("/summary", verifyToken, async (req, res) => {
   }
 });
 
+// router.get("/history", verifyToken, async (req, res) => {
+//   try {
+//     const userId = req.user.id;
+//     const sql = `SELECT l.*, lt.name as leave_type_name FROM leaves l JOIN leave_types lt ON l.leave_type_id = lt.id WHERE l.user_id = ? ORDER BY l.created_at DESC`;
+//     const [history] = await db.query(sql, [userId]);
+//     res.json(history);
+//   } catch (err) {
+//     res.status(500).json({ error: "Server Error" });
+//   }
+// });
 router.get("/history", verifyToken, async (req, res) => {
   try {
     const userId = req.user.id;
-    const sql = `SELECT l.*, lt.name as leave_type_name FROM leaves l JOIN leave_types lt ON l.leave_type_id = lt.id WHERE l.user_id = ? ORDER BY l.created_at DESC`;
+    // Join เอา comment ล่าสุดจาก logs (Subquery หรือ Left Join)
+    // เพื่อความง่าย ถ้า Log มีหลายอันเอาอันล่าสุด
+    const sql = `
+        SELECT l.*, lt.name as leave_type_name,
+        (SELECT comment FROM leave_approval_logs WHERE leave_id = l.id ORDER BY approved_at DESC LIMIT 1) as reject_reason
+        FROM leaves l 
+        JOIN leave_types lt ON l.leave_type_id = lt.id 
+        WHERE l.user_id = ? 
+        ORDER BY l.created_at DESC
+    `;
     const [history] = await db.query(sql, [userId]);
     res.json(history);
   } catch (err) {
@@ -357,10 +376,10 @@ router.post(
   }
 );
 
-// 5. UPDATE STATUS
+// 5. UPDATE STATUS (ADMIN)
 router.put("/:id/status", verifyAdmin, async (req, res) => {
   const leaveId = req.params.id;
-  const { status, comment } = req.body;
+  const { status, comment } = req.body; // รับ comment มาด้วย
   const connection = await db.getConnection();
   try {
     await connection.beginTransaction();
@@ -371,15 +390,20 @@ router.put("/:id/status", verifyAdmin, async (req, res) => {
     if (leaveData.length === 0) throw new Error("Not Found");
     const leaveRequest = leaveData[0];
 
+    // Update Main Table
     await connection.query("UPDATE leaves SET status = ? WHERE id = ?", [
       status,
       leaveId,
     ]);
+
+    // Insert Log with Comment
     await connection.query(
       "INSERT INTO leave_approval_logs (leave_id, approver_id, status, comment, approval_level) VALUES (?, ?, ?, ?, 1)",
-      [leaveId, req.user.id, status, comment || ""]
+      [leaveId, req.user.id, status, comment || null]
     );
 
+    // Refund Quota Logic (ถ้า Reject แล้วใบลาเดิมตัดโควต้าไปแล้ว ต้องคืน)
+    // สมมติว่าระบบตัดตั้งแต่ตอนขอ (Pending) ถ้า Reject ต้องคืน
     if (status === "rejected" && leaveRequest.status === "pending") {
       const currentYear = new Date().getFullYear();
       await connection.query(

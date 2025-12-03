@@ -4,6 +4,9 @@ import "./Schedule.css";
 import axios from "axios";
 import { AuthContext } from "../../context/AuthContext";
 
+// Import Components
+import CalendarGrid from "../../components/Calendar/CalendarGrid";
+
 const Schedule = () => {
   const { user } = useContext(AuthContext);
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -33,11 +36,6 @@ const Schedule = () => {
     }
   };
 
-  const getDaysInMonth = (date) =>
-    new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
-  const getFirstDayOfMonth = (date) =>
-    new Date(date.getFullYear(), date.getMonth(), 1).getDay();
-
   const handlePrevMonth = () => {
     setCurrentDate(
       new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1)
@@ -51,6 +49,7 @@ const Schedule = () => {
   };
 
   const handleDateClick = (day) => {
+    // Note: CalendarGrid sends day number
     const targetDate = new Date(
       currentDate.getFullYear(),
       currentDate.getMonth(),
@@ -59,7 +58,7 @@ const Schedule = () => {
     setSelectedDate(targetDate);
   };
 
-  // --- Helpers for Display ---
+  // --- Display Helpers ---
   const getStatusDisplay = (status) => {
     switch (status) {
       case "ontime":
@@ -91,18 +90,12 @@ const Schedule = () => {
           icon: "timelapse",
         };
       case "absent":
-        return {
-          text: "ขาดงาน",
-          color: "#b91c1c",
-          bg: "#fee2e2",
-          icon: "cancel",
-        };
+        return { text: "ขาด", color: "#b91c1c", bg: "#fee2e2", icon: "cancel" };
       default:
         return null;
     }
   };
 
-  // --- Status Mapping (สำหรับ Detail Panel) ---
   const getStatusInfo = (status) => {
     switch (status) {
       case "ontime":
@@ -139,201 +132,128 @@ const Schedule = () => {
           label: "ลางาน",
           icon: "flight_takeoff",
           class: "status-pending",
-        }; // เพิ่ม case leave
+        };
       case "scheduled":
       default:
         return { label: "รอลงเวลา", icon: "schedule", class: "status-pending" };
     }
   };
 
+  // Prepare Data for CalendarGrid
+  const getCalendarData = () => {
+    // 1. Separate Holidays
+    const holidays = scheduleData
+      .filter((s) => s.is_holiday || s.type === "holiday")
+      .map((h) => ({
+        holiday_date: h.date,
+        description: h.holiday_name || h.title,
+      }));
+
+    // 2. Filter Events (Leaves & Shifts)
+    // Exclude items that are purely holidays or off days without user interaction
+    const events = scheduleData.filter(
+      (s) => (s.type === "work" || s.type === "leave") && !s.is_holiday
+    );
+
+    return { holidays, events };
+  };
+
+  const { holidays, events } = getCalendarData();
+
+  // Selected Day Data for Right Panel
   const getSelectedDayData = () => {
-    if (!selectedDate) return { shifts: [], holiday: null, leaves: [] };
+    if (!selectedDate) return { items: [] };
+    // Adjust Timezone offset to match local date string
     const offset = selectedDate.getTimezoneOffset();
     const dateLocal = new Date(selectedDate.getTime() - offset * 60 * 1000);
     const dateStr = dateLocal.toISOString().split("T")[0];
 
-    const dayData = scheduleData.filter((s) => s.date === dateStr);
-
-    const shifts = dayData.filter((s) => s.type === "work");
-    const leaves = dayData.filter((s) => s.type === "leave");
-    const holiday = dayData.find(
-      (s) => s.type === "holiday" || s.type === "off"
-    );
-
-    // รวม leaves เข้าไปใน shifts เพื่อแสดงใน Detail Panel หรือแยกก็ได้
-    // ในที่นี้ขอแยกส่งออกไปเพื่อให้จัดการง่าย
-    return { shifts, holiday, leaves };
+    const dayItems = scheduleData.filter((s) => s.date === dateStr);
+    return { items: dayItems };
   };
 
-  const renderCalendar = () => {
-    const daysInMonth = getDaysInMonth(currentDate);
-    const firstDay = getFirstDayOfMonth(currentDate);
-    const days = [];
+  const { items: selectedItems } = getSelectedDayData();
+  const selectedHoliday = selectedItems.find(
+    (s) => s.type === "holiday" || s.type === "off"
+  );
 
-    for (let i = 0; i < firstDay; i++) {
-      days.push(<div key={`empty-${i}`} className="calendar-day empty"></div>);
-    }
-
-    for (let i = 1; i <= daysInMonth; i++) {
-      const dateObj = new Date(
-        currentDate.getFullYear(),
-        currentDate.getMonth(),
-        i
-      );
-      const offset = dateObj.getTimezoneOffset();
-      const dateLocal = new Date(dateObj.getTime() - offset * 60 * 1000);
-      const dateStr = dateLocal.toISOString().split("T")[0];
-
-      // Filter Data
-      const dayData = scheduleData.filter((s) => s.date === dateStr);
-      const dayShifts = dayData.filter((s) => s.type === "work");
-      const dayLeaves = dayData.filter((s) => s.type === "leave");
-      const holiday = dayData.find(
-        (s) => s.type === "holiday" || s.type === "off"
-      );
-
-      const isToday = new Date().toDateString() === dateObj.toDateString();
-      const isWeekend = dateObj.getDay() === 0 || dateObj.getDay() === 6;
-      const isSelected =
-        selectedDate && selectedDate.toDateString() === dateObj.toDateString();
-
-      // Border Color Logic
-      let boxClass = "";
-      if (dayShifts.some((s) => s.status === "absent")) boxClass = "absent";
-
-      days.push(
+  // Custom Render for User Schedule
+  const renderUserEvent = (item, idx) => {
+    if (item.type === "leave") {
+      return (
         <div
-          key={i}
-          className={`calendar-day 
-            ${isToday ? "today" : ""} 
-            ${isWeekend ? "weekend" : ""} 
-            ${isSelected ? "selected" : ""} 
-            ${holiday?.type === "holiday" ? "holiday" : ""}
-            ${boxClass}
-          `}
-          onClick={() => handleDateClick(i)}
+          key={`evt-${idx}`}
+          className="mb-1 px-2 rounded text-white text-truncate d-flex align-items-center"
+          style={{
+            backgroundColor: item.color || "#a855f7",
+            fontSize: "0.65rem",
+            paddingTop: "3px",
+            paddingBottom: "3px",
+            borderRadius: "6px",
+          }}
+          title={item.title}
         >
-          {/* Header: Date Number */}
-          <div className="d-flex justify-content-between align-items-center mb-1">
-            <span className="day-number">{i}</span>
-            {(dayShifts.length > 0 || dayLeaves.length > 0) && (
-              <span
-                className="badge rounded-pill bg-light text-secondary border"
-                style={{ fontSize: "0.55rem" }}
-              >
-                {dayShifts.length + dayLeaves.length}
-              </span>
-            )}
-          </div>
-
-          {/* 1. Holiday Label */}
-          {holiday && (
-            <div className="holiday-label" title={holiday.title}>
-              <span
-                className="material-symbols-rounded"
-                style={{ fontSize: "12px" }}
-              >
-                {holiday.type === "holiday" ? "celebration" : "weekend"}
-              </span>
-              <span>{holiday.title}</span>
-            </div>
-          )}
-
-          {/* 2. Leaves (แสดงก่อนงาน) */}
-          {dayLeaves.map((leave, idx) => (
-            <div
-              key={`leave-${idx}`}
-              className="mb-1 px-1 rounded text-white text-truncate d-flex align-items-center"
-              style={{
-                backgroundColor: leave.color || "#a855f7",
-                fontSize: "0.65rem",
-                paddingTop: "2px",
-                paddingBottom: "2px",
-              }}
-              title={leave.title}
-            >
-              <span
-                className="material-symbols-rounded me-1"
-                style={{ fontSize: "10px" }}
-              >
-                flight_takeoff
-              </span>
-              {leave.title}
-            </div>
-          ))}
-
-          {/* 3. Shifts (Work) */}
-          <div className="d-flex flex-column gap-1">
-            {dayShifts.slice(0, 2).map((shift, idx) => {
-              const statusMeta = getStatusDisplay(shift.status);
-
-              return (
-                <div
-                  key={`shift-${idx}`}
-                  className="p-1 rounded position-relative"
-                  style={{
-                    backgroundColor: "#f8f9fa",
-                    border: "1px solid #e9ecef",
-                  }}
-                >
-                  {/* Pill 1: Shift Info (แผนงาน) */}
-                  <div className="d-flex align-items-center gap-1">
-                    <span
-                      style={{
-                        width: "6px",
-                        height: "6px",
-                        borderRadius: "50%",
-                        backgroundColor: shift.color || "#ccc",
-                        flexShrink: 0,
-                      }}
-                    ></span>
-                    <span
-                      className="text-truncate fw-bold text-dark"
-                      style={{ fontSize: "0.65rem" }}
-                    >
-                      {shift.title}
-                    </span>
-                  </div>
-
-                  {/* Pill 2: Attendance Status (ผลลัพธ์) - แสดงเมื่อมีสถานะแล้ว */}
-                  {statusMeta && (
-                    <div
-                      className="mt-1 rounded px-1 d-flex align-items-center justify-content-center gap-1"
-                      style={{
-                        backgroundColor: statusMeta.bg,
-                        color: statusMeta.color,
-                        border: `1px solid ${statusMeta.color}30`, // 30 opacity
-                        fontSize: "0.6rem",
-                        fontWeight: 600,
-                      }}
-                    >
-                      <span
-                        className="material-symbols-rounded"
-                        style={{ fontSize: "10px" }}
-                      >
-                        {statusMeta.icon}
-                      </span>
-                      {statusMeta.text}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-
-            {/* ถ้ามีรายการเกิน 2 (รวม leave และ shift) ให้แสดง +More */}
-            {dayShifts.length + dayLeaves.length > 3 && (
-              <small
-                className="text-muted text-center d-block"
-                style={{ fontSize: "0.6rem", marginTop: "-2px" }}
-              >
-                +{dayShifts.length + dayLeaves.length - 2} รายการ
-              </small>
-            )}
-          </div>
+          <span
+            className="material-symbols-rounded me-1"
+            style={{ fontSize: "12px" }}
+          >
+            flight_takeoff
+          </span>
+          {item.title}
         </div>
       );
     }
-    return days;
+
+    // Work Shift
+    const statusMeta = getStatusDisplay(item.status);
+    return (
+      <div
+        key={`evt-${idx}`}
+        className="p-1 rounded mb-1 position-relative"
+        style={{ backgroundColor: "#f8f9fa", border: "1px solid #e9ecef" }}
+      >
+        {/* Shift Name & Color Dot */}
+        <div className="d-flex align-items-center gap-1">
+          <span
+            style={{
+              width: "8px",
+              height: "8px",
+              borderRadius: "50%",
+              backgroundColor: item.color || "#ccc",
+              flexShrink: 0,
+            }}
+          ></span>
+          <span
+            className="text-truncate fw-bold text-dark"
+            style={{ fontSize: "0.65rem" }}
+          >
+            {item.title}
+          </span>
+        </div>
+
+        {/* Status Badge (if checked in/late/absent) */}
+        {statusMeta && (
+          <div
+            className="mt-1 rounded px-1 d-flex align-items-center justify-content-center gap-1"
+            style={{
+              backgroundColor: statusMeta.bg,
+              color: statusMeta.color,
+              border: `1px solid ${statusMeta.color}30`,
+              fontSize: "0.6rem",
+              fontWeight: 600,
+            }}
+          >
+            <span
+              className="material-symbols-rounded"
+              style={{ fontSize: "10px" }}
+            >
+              {statusMeta.icon}
+            </span>
+            {statusMeta.text}
+          </div>
+        )}
+      </div>
+    );
   };
 
   const monthNames = [
@@ -351,17 +271,12 @@ const Schedule = () => {
     "ธันวาคม",
   ];
 
-  const {
-    shifts: selectedShifts,
-    holiday: selectedHoliday,
-    leaves: selectedLeaves,
-  } = getSelectedDayData();
-
-  // รวมรายการทั้งหมดเพื่อแสดงใน Detail Panel
-  const allDetailItems = [
-    ...selectedLeaves.map((l) => ({ ...l, isLeave: true })),
-    ...selectedShifts.map((s) => ({ ...s, isLeave: false })),
-  ];
+  // Helper Date String for CalendarGrid selected prop
+  const getSelectedDateStr = () => {
+    const offset = selectedDate.getTimezoneOffset();
+    const dateLocal = new Date(selectedDate.getTime() - offset * 60 * 1000);
+    return dateLocal.toISOString().split("T")[0];
+  };
 
   return (
     <div className="container-fluid py-4 px-4 mt-4">
@@ -383,10 +298,11 @@ const Schedule = () => {
       </div>
 
       <div className="row g-4">
-        {/* Left: Calendar */}
+        {/* Left: Calendar Component */}
         <div className="col-lg-8 col-xl-9">
-          <div className="calendar-container h-100">
-            <div className="calendar-header">
+          <div className="calendar-container h-100 p-0 overflow-hidden d-flex flex-column">
+            {/* Custom Header for Calendar */}
+            <div className="calendar-header p-3 m-0 border-bottom">
               <h4 className="fw-bold m-0 text-primary">
                 {monthNames[currentDate.getMonth()]}{" "}
                 <span className="text-dark">
@@ -415,74 +331,72 @@ const Schedule = () => {
               </div>
             </div>
 
-            {loading ? (
-              <div className="text-center py-5">
-                <div
-                  className="spinner-border text-primary"
-                  role="status"
-                ></div>
-              </div>
-            ) : (
-              <>
-                <div className="calendar-grid mb-2">
-                  {["อา", "จ", "อ", "พ", "พฤ", "ศ", "ส"].map((day) => (
-                    <div key={day} className="weekday-header">
-                      {day}
-                    </div>
-                  ))}
+            <div className="flex-grow-1 p-3 bg-light">
+              {loading ? (
+                <div className="text-center py-5">
+                  <div className="spinner-border text-primary"></div>
                 </div>
-                <div className="calendar-grid">{renderCalendar()}</div>
+              ) : (
+                <CalendarGrid
+                  currentDate={currentDate}
+                  schedules={events} // Pass work/leave events
+                  holidays={holidays} // Pass separated holidays
+                  selectedDateStr={getSelectedDateStr()}
+                  onDayClick={handleDateClick}
+                  readOnly={true} // User cannot edit schedule
+                  renderEvent={renderUserEvent} // Use custom render logic
+                />
+              )}
+            </div>
 
-                {/* Legend Updated */}
-                <div className="d-flex gap-3 mt-3 pt-3 border-top justify-content-center flex-wrap small text-muted">
-                  <div className="d-flex align-items-center gap-1">
-                    <span
-                      className="material-symbols-rounded text-success"
-                      style={{ fontSize: "16px" }}
-                    >
-                      check_circle
-                    </span>{" "}
-                    มาปกติ
-                  </div>
-                  <div className="d-flex align-items-center gap-1">
-                    <span
-                      className="material-symbols-rounded text-warning"
-                      style={{ fontSize: "16px" }}
-                    >
-                      warning
-                    </span>{" "}
-                    สาย
-                  </div>
-                  <div className="d-flex align-items-center gap-1">
-                    <span
-                      className="material-symbols-rounded text-danger"
-                      style={{ fontSize: "16px" }}
-                    >
-                      cancel
-                    </span>{" "}
-                    ขาด
-                  </div>
-                  <div className="d-flex align-items-center gap-1">
-                    <span
-                      className="material-symbols-rounded text-info"
-                      style={{ fontSize: "16px" }}
-                    >
-                      timelapse
-                    </span>{" "}
-                    กำลังทำ
-                  </div>
-                  <div className="d-flex align-items-center gap-1">
-                    <span
-                      className="material-symbols-rounded"
-                      style={{ fontSize: "16px", color: "#a855f7" }}
-                    >
-                      flight_takeoff
-                    </span>{" "}
-                    ลางาน
-                  </div>
-                </div>
-              </>
-            )}
+            {/* Legend */}
+            <div className="d-flex gap-3 p-3 border-top justify-content-center flex-wrap small text-muted bg-white">
+              <div className="d-flex align-items-center gap-1">
+                <span
+                  className="material-symbols-rounded text-success"
+                  style={{ fontSize: "16px" }}
+                >
+                  check_circle
+                </span>{" "}
+                มาปกติ
+              </div>
+              <div className="d-flex align-items-center gap-1">
+                <span
+                  className="material-symbols-rounded text-warning"
+                  style={{ fontSize: "16px" }}
+                >
+                  warning
+                </span>{" "}
+                สาย
+              </div>
+              <div className="d-flex align-items-center gap-1">
+                <span
+                  className="material-symbols-rounded text-danger"
+                  style={{ fontSize: "16px" }}
+                >
+                  cancel
+                </span>{" "}
+                ขาด
+              </div>
+              <div className="d-flex align-items-center gap-1">
+                <span
+                  className="material-symbols-rounded text-info"
+                  style={{ fontSize: "16px" }}
+                >
+                  timelapse
+                </span>{" "}
+                กำลังทำ
+              </div>
+              <div className="d-flex align-items-center gap-1">
+                <span
+                  className="material-symbols-rounded"
+                  style={{ fontSize: "16px", color: "#a855f7" }}
+                >
+                  flight_takeoff
+                </span>{" "}
+                ลางาน
+              </div>
+            </div>
           </div>
         </div>
 
@@ -518,16 +432,18 @@ const Schedule = () => {
               </div>
             )}
 
-            {allDetailItems.length > 0 ? (
+            {selectedItems.length > 0 ? (
               <div
                 className="d-flex flex-column gap-3 overflow-auto"
                 style={{ maxHeight: "600px" }}
               >
-                {allDetailItems.map((item, idx) => {
+                {selectedItems.map((item, idx) => {
+                  if (item.type === "holiday" || item.type === "off")
+                    return null; // Already shown in banner
                   const statusInfo = getStatusInfo(item.status);
 
                   // Detail for Leaves
-                  if (item.isLeave) {
+                  if (item.type === "leave") {
                     return (
                       <div
                         key={`d-leave-${idx}`}
@@ -638,7 +554,6 @@ const Schedule = () => {
                                 </div>
                               )}
                             </div>
-
                             {item.checkOut && item.checkOut !== "-" && (
                               <div className="time-entry">
                                 <div className="d-flex justify-content-between align-items-center mb-1">
@@ -667,7 +582,6 @@ const Schedule = () => {
                             )}
                           </div>
                         )}
-
                         {item.status === "absent" && (
                           <div className="alert alert-danger py-2 px-3 small m-0 text-center">
                             ไม่พบข้อมูลการลงเวลา

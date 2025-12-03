@@ -245,6 +245,26 @@ const Leave = () => {
     });
   };
 
+  const handleHistoryClick = (item) => {
+    if (item.status === "rejected" && item.reject_reason) {
+      Swal.fire({
+        title: "ถูกปฏิเสธคำขอ",
+        html: `<p class="text-muted">เหตุผล:</p><div class="p-3 bg-light rounded text-danger fst-italic border">"${item.reject_reason}"</div>`,
+        icon: "error",
+        confirmButtonColor: "#64748b",
+        confirmButtonText: "ปิด",
+      });
+    } else if (item.status === "approved") {
+      Swal.fire({
+        title: "อนุมัติแล้ว",
+        text: "รายการนี้ได้รับอนุมัติเรียบร้อย",
+        icon: "success",
+        timer: 1500,
+        showConfirmButton: false,
+      });
+    }
+  };
+
   return (
     <div className="leave-page fade-in">
       <div className="container-xl py-4">
@@ -567,7 +587,13 @@ const Leave = () => {
 
                   <div className="history-premium-list">
                     {history.slice(0, 4).map((item) => (
-                      <div key={item.id} className="history-timeline-item">
+                      // <div key={item.id} className="history-timeline-item">
+                      <div
+                        key={item.id}
+                        className="history-timeline-item"
+                        onClick={() => handleHistoryClick(item)}
+                        style={{ cursor: "pointer" }}
+                      >
                         <div
                           className={`icon-box-premium ${getLeaveColor(
                             item.leave_type_name
