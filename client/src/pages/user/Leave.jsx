@@ -4,9 +4,10 @@ import axios from "axios";
 import "./Leave.css";
 
 // Import Components
-import ThaiDatePicker from "../../components/Input/ThaiDatePicker"; //
+import ThaiDatePicker from "../../components/Input/ThaiDatePicker";
 import ModernModal from "../../components/Modal";
-import ModernDropdown from "../../components/DropDown"; // ปรับ path ตามจริง
+import ModernDropdown from "../../components/DropDown";
+import ModernTimePicker from "../../components/Input/ModernTimePicker"; // Import ใหม่
 
 const Leave = () => {
   const apiUrl = import.meta.env.VITE_API_URL;
@@ -35,7 +36,7 @@ const Leave = () => {
   // --- Modal & Search State ---
   const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-  const [filterType, setFilterType] = useState("all"); // สำหรับ Dropdown Filter
+  const [filterType, setFilterType] = useState("all");
 
   useEffect(() => {
     fetchSummary();
@@ -81,6 +82,11 @@ const Leave = () => {
       }
       return newData;
     });
+  };
+
+  // Handler for Time Picker
+  const handleTimeChange = (key, timeVal) => {
+    setFormData((prev) => ({ ...prev, [key]: timeVal }));
   };
 
   // --- Duration Logic ---
@@ -155,24 +161,18 @@ const Leave = () => {
     );
   };
 
-  // --- Filter Logic for Modal ---
   const getFilteredHistory = () => {
     return history.filter((item) => {
-      // 1. Search Text (Reason or Leave Type)
       const textMatch =
         item.leave_type_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         (item.reason &&
           item.reason.toLowerCase().includes(searchTerm.toLowerCase()));
-
-      // 2. Filter Dropdown
       const typeMatch =
         filterType === "all" || item.leave_type_name === filterType;
-
       return textMatch && typeMatch;
     });
   };
 
-  // --- Submit ---
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!durationStr || durationStr.includes("ไม่ถูกต้อง")) {
@@ -281,6 +281,7 @@ const Leave = () => {
         </div>
 
         <div className="row g-4">
+          {/* LEFT: Form */}
           <div className="col-lg-8">
             <div className="leave-card p-0 overflow-hidden h-100">
               <div className="card-header-custom p-4 border-bottom">
@@ -293,7 +294,6 @@ const Leave = () => {
               </div>
               <div className="p-4">
                 <form onSubmit={handleSubmit}>
-                  {/* ... (ส่วน Form เหมือนเดิม ไม่ได้เปลี่ยนแปลง Logic แต่ใช้ Layout เดิม) ... */}
                   <div className="row g-4">
                     {/* 1. Leave Types */}
                     <div className="col-12">
@@ -332,7 +332,7 @@ const Leave = () => {
                       </div>
                     </div>
 
-                    {/* 2. Date Section (Keep logic as is) */}
+                    {/* 2. Date Section */}
                     <div className="col-12">
                       <div className="bg-light rounded-4 p-4 border date-section-wrapper">
                         <div className="d-flex justify-content-between align-items-center mb-3">
@@ -389,32 +389,33 @@ const Leave = () => {
                             />
                           </div>
 
+                          {/* Custom Time Picker */}
                           {!isFullDay && (
                             <div className="col-12 fade-in">
                               <div className="time-selector-group">
                                 <div className="time-box">
                                   <label>เวลาเริ่ม</label>
-                                  <input
-                                    type="time"
-                                    name="startTime"
+                                  {/* USE MODERN TIME PICKER */}
+                                  <ModernTimePicker
                                     value={formData.startTime}
-                                    onChange={handleChange}
-                                    className="time-input"
+                                    onChange={(val) =>
+                                      handleTimeChange("startTime", val)
+                                    }
                                   />
                                 </div>
                                 <div className="separator">
-                                  <span className="material-symbols-rounded">
-                                    arrow_forward
+                                  <span className="material-symbols-rounded fs-3">
+                                    arrow_right_alt
                                   </span>
                                 </div>
                                 <div className="time-box">
                                   <label>เวลาสิ้นสุด</label>
-                                  <input
-                                    type="time"
-                                    name="endTime"
+                                  {/* USE MODERN TIME PICKER */}
+                                  <ModernTimePicker
                                     value={formData.endTime}
-                                    onChange={handleChange}
-                                    className="time-input"
+                                    onChange={(val) =>
+                                      handleTimeChange("endTime", val)
+                                    }
                                   />
                                 </div>
                               </div>
@@ -504,9 +505,7 @@ const Leave = () => {
             </div>
           </div>
 
-          {/* =======================================================
-            RIGHT: NEW PREMIUM STATS & HISTORY (ส่วนที่แก้ใหม่)
-           ======================================================= */}
+          {/* RIGHT: Stats & History (Same as before) */}
           <div className="col-lg-4">
             <div className="d-flex flex-column gap-4 h-100">
               <div className="premium-stats-card">
@@ -531,8 +530,6 @@ const Leave = () => {
                     const total = stat.max_per_year;
                     const percent = total > 0 ? (used / total) * 100 : 0;
                     const remaining = total - used;
-
-                    // Map class to gradient
                     let gradientClass = "grad-other";
                     if (cssClass === "sick") gradientClass = "grad-sick";
                     if (cssClass === "business")
@@ -548,14 +545,12 @@ const Leave = () => {
                             เหลือ {remaining} วัน
                           </span>
                         </div>
-
                         <div className="premium-progress-bg">
                           <div
                             className={`premium-progress-bar ${gradientClass}`}
                             style={{ width: `${percent}%` }}
                           ></div>
                         </div>
-
                         <div className="quota-detail">
                           <span>ใช้ไปแล้ว {used} วัน</span>
                           <span>ทั้งหมด {total} วัน</span>
@@ -565,7 +560,6 @@ const Leave = () => {
                   })}
                 </div>
 
-                {/* --- 2. RECENT HISTORY SECTION --- */}
                 <div className="history-premium-wrapper">
                   <div className="premium-header bg-transparent border-0 pb-3 pt-4">
                     <div className="d-flex align-items-center gap-2">
@@ -587,7 +581,6 @@ const Leave = () => {
 
                   <div className="history-premium-list">
                     {history.slice(0, 4).map((item) => (
-                      // <div key={item.id} className="history-timeline-item">
                       <div
                         key={item.id}
                         className="history-timeline-item"
@@ -612,7 +605,6 @@ const Leave = () => {
                           </div>
                         </div>
                         <div>
-                          {/* Badge แบบย่อ */}
                           {item.status === "approved" && (
                             <span className="material-symbols-rounded text-success">
                               check_circle
@@ -631,7 +623,6 @@ const Leave = () => {
                         </div>
                       </div>
                     ))}
-
                     {history.length === 0 && (
                       <div className="text-center text-muted py-5 opacity-50">
                         <span className="material-symbols-rounded fs-1 d-block mb-2">
@@ -648,9 +639,7 @@ const Leave = () => {
         </div>
       </div>
 
-      {/* =======================================================
-        MODAL: FULL HISTORY (New Beautiful Design)
-       ======================================================= */}
+      {/* Full History Modal (Same as before) */}
       <ModernModal
         isOpen={showHistoryModal}
         onClose={() => setShowHistoryModal(false)}
@@ -662,7 +651,6 @@ const Leave = () => {
           className="p-4"
           style={{ background: "#f8fafc", minHeight: "60vh" }}
         >
-          {/* Search Bar */}
           <div className="row g-3 mb-4">
             <div className="col-md-8">
               <div className="input-group-modern bg-white rounded-4 shadow-sm">
@@ -690,8 +678,6 @@ const Leave = () => {
               />
             </div>
           </div>
-
-          {/* Full History List */}
           <div className="history-full-list-wrapper">
             {getFilteredHistory().length > 0 ? (
               getFilteredHistory().map((item) => (
@@ -700,6 +686,8 @@ const Leave = () => {
                   className={`full-history-card ${getLeaveColor(
                     item.leave_type_name
                   )}`}
+                  onClick={() => handleHistoryClick(item)}
+                  style={{ cursor: "pointer" }}
                 >
                   <div className="d-flex gap-3 align-items-start">
                     <div
@@ -717,7 +705,6 @@ const Leave = () => {
                         {getLeaveIcon(item.leave_type_name)}
                       </span>
                     </div>
-
                     <div className="full-history-info">
                       <h6>{item.leave_type_name}</h6>
                       <div className="full-history-meta mb-2">
@@ -739,7 +726,6 @@ const Leave = () => {
                       )}
                     </div>
                   </div>
-
                   <div className="d-flex flex-column align-items-end justify-content-between h-100 gap-2">
                     <div className={`pill-badge ${item.status}`}>
                       {item.status === "approved" && (

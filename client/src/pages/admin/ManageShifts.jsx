@@ -5,6 +5,7 @@ import "./ManageShifts.css";
 import Modal from "../../components/Modal";
 // Import Component ที่สร้างใหม่
 import ModernColorPicker from "../../components/ColorPicker/ColorPicker";
+import ModernTimePicker from "../../components/Input/ModernTimePicker"; // Import TimePicker
 
 function ManageShifts() {
   const [shifts, setShifts] = useState([]);
@@ -31,7 +32,7 @@ function ManageShifts() {
   const token = localStorage.getItem("token");
   const config = { headers: { Authorization: `Bearer ${token}` } };
 
-  // Helper Map สำหรับแปลงชื่อสีเก่าใน DB ให้เป็น Hex (กรณีมีข้อมูลเก่า)
+  // Helper Map สำหรับแปลงชื่อสีเก่าใน DB ให้เป็น Hex
   const legacyColorMap = {
     blue: "#3b82f6",
     green: "#10b981",
@@ -76,6 +77,7 @@ function ManageShifts() {
   };
 
   const timeToMinutes = (timeStr) => {
+    if (!timeStr) return 0;
     const [h, m] = timeStr.split(":").map(Number);
     return h * 60 + m;
   };
@@ -88,6 +90,11 @@ function ManageShifts() {
   // Handler สำหรับ ColorPicker Component
   const handleColorChange = (newColor) => {
     setFormData({ ...formData, color: newColor });
+  };
+
+  // Handler สำหรับ TimePicker Component (รับค่าโดยตรง ไม่ใช่ event)
+  const handleTimeChange = (field, value) => {
+    setFormData({ ...formData, [field]: value });
   };
 
   const handleOpenAddModal = () => {
@@ -222,11 +229,9 @@ function ManageShifts() {
                       backgroundColor: displayColor,
                       color: "#fff",
                       letterSpacing: "0.5px",
-                      // Shadow เพื่อให้อ่านง่ายขึ้น
                       textShadow: "0 1px 2px rgba(0,0,0,0.2)",
                     }}
                   >
-                    {/* แสดงค่า Hex หรือชื่อสีออกมาเลย */}
                     {shift.color ? shift.color.toUpperCase() : "NO COLOR"}
                   </span>
                 </div>
@@ -325,8 +330,7 @@ function ManageShifts() {
               />
 
               <label className="form-label-sm mb-2">ธีมสี (Color Theme)</label>
-
-              {/* ใช้ Component ModernColorPicker ที่สร้างใหม่ */}
+              {/* ใช้ Component ModernColorPicker */}
               <ModernColorPicker
                 color={formData.color}
                 onChange={handleColorChange}
@@ -335,32 +339,30 @@ function ManageShifts() {
 
             <div className="bg-soft-gray p-4 rounded-4 border-0">
               <div className="row g-3">
+                {/* --- Start Time --- */}
                 <div className="col-6">
                   <label className="form-label-sm text-muted">
                     เวลาเข้างาน
                   </label>
-                  <input
-                    type="time"
-                    className="form-control modern-input fw-bold text-dark"
-                    name="start_time"
+                  {/* เปลี่ยน input time เป็น ModernTimePicker */}
+                  <ModernTimePicker
                     value={formData.start_time}
-                    onChange={handleInputChange}
-                    required
+                    onChange={(val) => handleTimeChange("start_time", val)}
                   />
                 </div>
+
+                {/* --- End Time --- */}
                 <div className="col-6">
                   <label className="form-label-sm text-muted">
                     เวลาเลิกงาน
                   </label>
-                  <input
-                    type="time"
-                    className="form-control modern-input fw-bold text-dark"
-                    name="end_time"
+                  {/* เปลี่ยน input time เป็น ModernTimePicker */}
+                  <ModernTimePicker
                     value={formData.end_time}
-                    onChange={handleInputChange}
-                    required
+                    onChange={(val) => handleTimeChange("end_time", val)}
                   />
                 </div>
+
                 <div className="col-12">
                   <label className="form-label-sm text-muted">
                     พักเบรค (นาที)

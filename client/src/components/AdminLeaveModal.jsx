@@ -4,6 +4,7 @@ import Swal from "sweetalert2";
 import ModernModal from "./Modal";
 import ThaiDatePicker from "./Input/ThaiDatePicker";
 import SearchableDropdown from "./SearchableDropdown";
+import ModernTimePicker from "./Input/ModernTimePicker"; // Import TimePicker
 
 const AdminLeaveModal = ({
   isOpen,
@@ -258,9 +259,15 @@ const AdminLeaveModal = ({
             <div className="row g-2 mt-2 fade-in">
               <div className="col-6">
                 <small className="text-muted">เวลาเริ่ม</small>
-                <input
+                {/* <input
                   type="time"
                   className="form-control"
+                  value={formData.startTime}
+                  onChange={(e) =>
+                    setFormData({ ...formData, startTime: e.target.value })
+                  }
+                /> */}
+                <ModernTimePicker
                   value={formData.startTime}
                   onChange={(e) =>
                     setFormData({ ...formData, startTime: e.target.value })
@@ -269,9 +276,15 @@ const AdminLeaveModal = ({
               </div>
               <div className="col-6">
                 <small className="text-muted">เวลาสิ้นสุด</small>
-                <input
+                {/* <input
                   type="time"
                   className="form-control"
+                  value={formData.endTime}
+                  onChange={(e) =>
+                    setFormData({ ...formData, endTime: e.target.value })
+                  }
+                /> */}
+                <ModernTimePicker
                   value={formData.endTime}
                   onChange={(e) =>
                     setFormData({ ...formData, endTime: e.target.value })
